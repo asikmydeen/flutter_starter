@@ -1,0 +1,5 @@
+# Test tags. Golden tests are excluded from the default CI run because
+# rasterization differs slightly across host platforms (macOS vs Linux).
+# Run them explicitly: flutter test --tags golden
+tags:
+  golden:

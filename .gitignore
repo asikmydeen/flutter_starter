@@ -1,12 +1,30 @@
+# Tooling
 .dart_tool/
+.flutter-plugins-dependencies
 .fvm/
 build/
 .idea/
 .vscode/
 *.iml
+
+# Platform
 ios/Pods/
 ios/.symlinks/
 android/.gradle/
-*.g.dart
-*.freezed.dart
+android/local.properties
+ios/Flutter/ephemeral/
+
+# Secrets — never commit env files or keys
 .env
+.env.*
+*.keystore
+*.jks
+key.properties
+
+# Test artifacts
+coverage/
+test/**/failures/
+
+# NOTE (agents): generated files (*.g.dart, *.freezed.dart) ARE committed.
+# CI fails if they drift from source — always run codegen after editing
+# annotated files. pubspec.lock is also committed for reproducible builds.

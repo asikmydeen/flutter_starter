@@ -1,92 +1,131 @@
-# AGENTS.md — Flutter Project Build Guide
+# AGENTS.md — Operating Manual
 
-> Directives for any AI coding agent (Claude Code, Cursor, Kiro, Copilot, etc.) working in a Flutter repo.
-> Follow phases **in order** — each unblocks the next. Check off items as you complete them.
-> This file is portable: drop it into any Flutter repo and hand it to an agent.
+> Directives for any AI coding agent working in this repo.
+> Bootstrapping a NEW project from this template? See `docs/NEW_PROJECT.md`.
 
-## Golden rules
+## The one rule
 
-- **Match ceremony to complexity.** A 5-screen app does NOT need full Clean Architecture. Don't over-engineer.
-- **Never hardcode secrets or environment values.** Use `--dart-define` and `AppConfig`.
-- **Codegen is not optional.** After editing any `freezed`, `json_serializable`, or `riverpod_generator` annotated file, run `dart run build_runner build --delete-conflicting-outputs`.
-- **Lints and tests must pass before every commit.** `flutter analyze` clean + `flutter test` green.
-- **Prefer the modern default stack** (below) unless the repo already committed to another. Do not mix state-management libraries.
-- **One feature = one folder** under `lib/features/`, with `data / domain / application / presentation` layers.
+**A task is done when `./tool/verify.sh` passes.** It runs deps → l10n →
+codegen → format → analyze → tests → coverage floor. CI runs the exact same
+script (`--ci` mode adds codegen-drift and format-drift failures). Never
+declare a task complete without running it.
 
-## Modern default stack
+## Commands
 
-| Concern | Package |
+| Task | Command |
 |---|---|
-| State | `flutter_riverpod` + `riverpod_generator` |
-| Navigation | `go_router` |
-| Networking | `dio` |
-| Models | `freezed` + `json_serializable` |
-| Storage | `isar` / `drift` / `shared_preferences` |
-| DI | `get_it` + `injectable`, or Riverpod providers |
-| Codegen | `build_runner` |
-| Lints | `very_good_analysis` |
+| One-time setup after clone | `make setup` |
+| Regenerate codegen (freezed/riverpod/json) | `make gen` |
+| Regenerate l10n from ARB files | `make l10n` |
+| Fast tests (no goldens) | `make test` |
+| Regenerate golden screenshots | `make goldens` |
+| **Full verification (definition of done)** | `make verify` or `./tool/verify.sh` |
+| Scaffold a new feature | `make feature NAME=my_feature` |
+| Run the app | `make run` (dev flavor) |
 
----
+The SDK is pinned in `.fvmrc` and CI reads it from there. Use `fvm flutter`
+if FVM is installed; the Makefile and verify.sh handle this automatically.
 
-## Phase 0 — Environment
+## Stack (do not substitute)
 
-- [ ] Ensure **FVM** is installed and the SDK pinned (`.fvmrc` present); if missing, run `fvm use stable`.
-- [ ] Run `flutter doctor` and resolve every ✗ (Xcode + CocoaPods, Android SDK, licenses).
-- [ ] Confirm an iOS simulator AND an Android emulator are available.
+Riverpod 3 (`@riverpod` codegen only — no `StateNotifier`, no manual
+providers for feature logic) · go_router · dio · freezed 3 + json_serializable ·
+very_good_analysis · mocktail + http_mock_adapter for tests.
 
-## Phase 1 — Scaffold from a blueprint
+## How to add a feature
 
-- [ ] Prefer **Very Good CLI** over bare `flutter create`: `very_good create flutter_app <name>`.
-- [ ] Set reverse-domain bundle/application IDs (e.g. `com.company.app`).
-- [ ] `git init` and make the first commit before writing feature code.
+1. `make feature NAME=my_feature` — stamps the canonical layout with
+   `TODO(agent)` markers and a passing test skeleton.
+2. Fill in the markers. Mirror the reference feature `lib/features/todos/`
+   for every pattern decision — it is the gold standard for all four layers.
+3. `make gen`, add a route (`RouteNames` + `GoRoute` in
+   `lib/core/router/app_router.dart`), add strings to
+   `lib/l10n/arb/app_en.arb` + `make l10n`.
+4. `./tool/verify.sh`.
 
-## Phase 2 — Structure & config
+## Architecture rules
 
-- [ ] Adopt **feature-first + layered** structure: `core/` (config, theme, router, network) + `features/<feature>/{data,domain,application,presentation}`.
-- [ ] Set up **flavors**: dev / staging / prod.
-- [ ] Wire env config via `--dart-define=ENV=...` read through a single `AppConfig` class.
-- [ ] Configure app name, launcher icon (`flutter_launcher_icons`), splash (`flutter_native_splash`).
-- [ ] Add type-safe asset handling (`flutter_gen`) and declare `assets/` in `pubspec.yaml`.
+- **Layers**: `features/<name>/{domain,data,application,presentation}`.
+  Domain = pure entities + repository interfaces. Data = DTOs (own all JSON)
+  + repository implementations. Application = `@riverpod` controllers.
+  Presentation = screens/widgets.
+- **Repositories never throw.** They return `Result<T>` (`lib/core/result/`).
+  Catch with `on Exception`, map via `mapToAppException`. The closed error
+  set lives in `lib/core/error/app_exception.dart` — extend it there, don't
+  invent ad-hoc exceptions.
+- **Controllers** rethrow failures via `result.valueOrThrow` so Riverpod
+  exposes `AsyncError`; screens `switch` on `AsyncValue` and render all
+  three states (see `todos_screen.dart`).
+- **User-facing strings** go in `lib/l10n/arb/app_en.arb`, never inline.
+- **Navigation** only via `context.goNamed(RouteNames.x)` — no raw paths.
+- **Env values** only via `AppConfig` — never read `String.fromEnvironment`
+  elsewhere, never hardcode URLs or secrets.
+- **Errors at the top**: global handlers live in `lib/bootstrap.dart` only.
 
-## Phase 3 — Core dependencies
+## Codegen rules
 
-- [ ] Add the modern default stack (table above) to `pubspec.yaml`.
-- [ ] Run `flutter pub get`.
-- [ ] Establish a codegen habit: `dart run build_runner watch --delete-conflicting-outputs` during dev.
+- After editing ANY file with `@riverpod`, `@freezed`, or json annotations:
+  `make gen`. Not optional — CI fails on drift.
+- Generated files (`*.g.dart`, `*.freezed.dart`, `lib/l10n/gen/`) are
+  COMMITTED. Commit them together with their sources.
+- json_serializable runs with `checked: true` (see `build.yaml`): bad
+  payloads throw `CheckedFromJsonException` (an Exception), which
+  `mapToAppException` turns into `ParsingException`. Don't change this.
 
-## Phase 4 — Quality guardrails (do NOW, not later)
+## Testing patterns (copy these, don't invent)
 
-- [ ] Strict lints: `include: package:very_good_analysis/analysis_options.yaml` in `analysis_options.yaml`; exclude `*.g.dart` / `*.freezed.dart`.
-- [ ] Testing pyramid: unit (logic) → widget (UI) → integration (`patrol` for native flows).
-- [ ] Pre-commit hook (`lefthook` or similar): `dart format` + `flutter analyze`.
-- [ ] CI from commit #1: GitHub Actions running `flutter analyze` + `flutter test` on every PR (see `.github/workflows/ci.yml`).
+| Layer | Reference test | Technique |
+|---|---|---|
+| Data | `test/features/todos/data/api_todos_repository_test.dart` | Mock HTTP with `http_mock_adapter` |
+| Application | `test/features/todos/application/todos_controller_test.dart` | `mocktail` mock of the repo interface + `ProviderContainer` |
+| Presentation | `test/features/todos/presentation/todos_screen_test.dart` | `tester.pumpApp(...)` with provider overrides |
+| Visual | `test/goldens/home_screen_golden_test.dart` | Golden, tagged `golden` |
 
-## Phase 5 — App skeleton before features
+- Always pump screens with `tester.pumpApp` from `test/helpers/helpers.dart`.
+- Test names: `should <expected behavior> when <condition>`.
+- Golden tests are excluded from default runs and CI (cross-platform
+  rasterization drift). Regenerate intentionally: `make goldens`.
 
-- [ ] Central **theme** (light/dark via `ColorScheme.fromSeed`, typography).
-- [ ] **Router** with a shell route + not-found handling.
-- [ ] Global **error handling** + logging (`logger` / `talker`).
-- [ ] App-wide **localization** (l10n) scaffolding, even if single-language now.
-- [ ] A `Result`/`Either` return type for the data layer.
+## Known gotchas (learned the hard way — do not rediscover)
 
-## Phase 6 — Ship readiness
+1. **Riverpod 3 auto-retries failed providers** with backoff. Error-path
+   tests hang unless the container/scope sets `retry: (_, _) => null`.
+   `pumpApp` and the test templates already do this.
+2. **Generated providers are autoDispose.** In `ProviderContainer` tests,
+   hold a listener (`container.listen(...)`) or the provider is disposed
+   mid-load with "disposed during loading state". Subscribe AFTER stubbing
+   mocks — listening triggers the first build.
+3. **`Override` moved to `package:flutter_riverpod/misc.dart`** in
+   Riverpod 3. If `List<Override>` won't resolve, that import is missing.
+4. **freezed 3 requires `abstract`/`sealed`** on annotated classes
+   (`abstract class Todo with _$Todo`).
+5. **`AppConfig.instance` before `init()` throws StateError.** In tests,
+   call `setUpTestConfig()` from `test/helpers/` if config is touched.
+6. **build_runner conflicts**: always use `--delete-conflicting-outputs`
+   (the Makefile does).
+7. **iOS pod failures**: `cd ios && pod install --repo-update`. Gradle
+   heap: bump `org.gradle.jvmargs` in `android/gradle.properties`.
+8. **Hot reload does not apply codegen changes** — rerun `make gen`, then
+   restart.
 
-- [ ] `flutter build appbundle` (Android) and `flutter build ipa` (iOS) both succeed.
-- [ ] Signing configured: Android keystore + iOS certs/provisioning.
-- [ ] CI/CD for store delivery (**Codemagic** or **Fastlane**).
-- [ ] Crash/analytics wired (Firebase Crashlytics / Sentry).
-- [ ] Store assets ready: privacy policy, screenshots, descriptions.
+## Environments
 
----
+`--dart-define=ENV=dev|staging|prod`, read once in `bootstrap()` into
+`AppConfig`. Unknown values throw at startup by design. Default is `dev`.
 
-## Definition of done (for any feature)
+## MCP
 
-1. Code compiles; `flutter analyze` is clean.
-2. Codegen artifacts regenerated and committed (or gitignored consistently).
-3. Unit + widget tests cover the new logic and pass.
-4. No hardcoded secrets; env-dependent values go through `AppConfig`.
-5. New feature follows the `features/<name>/{data,domain,application,presentation}` layout.
+The Dart SDK ships an MCP server that gives agents structured access to the
+analyzer, test runner, and pub. Prefer it over parsing CLI text when your
+runtime supports MCP — see `.mcp.json` at the repo root:
 
-## The 20% that gives 80% of the value
+```bash
+dart mcp-server
+```
 
-Blueprint scaffold (Phase 1) + feature-first + Riverpod (Phases 2–3) + lints & CI from day one (Phase 4). Skip those and every later phase gets harder.
+## Scope discipline
+
+- Match existing patterns before inventing new ones. Deviating from a
+  pattern in this file requires calling it out and getting approval first.
+- Minimal changes; no drive-by refactors; flag extra work, don't do it.
+- Never commit secrets. `.env*`, keystores, `key.properties` are gitignored.

@@ -5,17 +5,68 @@ on:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  # Format, codegen drift, analyze, tests, coverage floor — the same
+  # ./tool/verify.sh --ci an agent runs locally. One source of truth.
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Single source of truth for the SDK version: .fvmrc
+      - name: Read pinned Flutter version
+        run: echo "FLUTTER_VERSION=$(jq -r .flutter .fvmrc)" >> "$GITHUB_ENV"
+
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+
+      - name: Verify (deps, l10n, codegen drift, format, analyze, test, coverage)
+        run: ./tool/verify.sh --ci
+
+  # Smoke-build the Android app. analyze+test alone miss platform breakage
+  # (Gradle config, manifest issues, plugin registration).
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read pinned Flutter version
+        run: echo "FLUTTER_VERSION=$(jq -r .flutter .fvmrc)" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
       - run: flutter pub get
-      - run: dart run build_runner build --delete-conflicting-outputs
-      - run: dart format --set-exit-if-changed .
-      - run: flutter analyze
-      - run: flutter test
+      - run: flutter build apk --debug --dart-define=ENV=dev
+
+  # Secret scanning + dependency vulnerability audit.
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Scan dependencies for known vulnerabilities
+        uses: google/osv-scanner-action/osv-scanner-action@v2
+        with:
+          scan-args: --lockfile=pubspec.lock
+        continue-on-error: true # advisory: new CVEs shouldn't block unrelated PRs

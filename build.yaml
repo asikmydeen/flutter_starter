@@ -1,0 +1,13 @@
+# Codegen configuration.
+#
+# `checked: true` makes generated fromJson throw CheckedFromJsonException
+# (an Exception with field-level detail) instead of an opaque TypeError
+# when the payload doesn't match the model. Repositories rely on this:
+# their `on Exception` catch maps it to ParsingException.
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          checked: true
+          explicit_to_json: true

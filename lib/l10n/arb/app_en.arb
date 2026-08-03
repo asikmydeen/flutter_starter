@@ -1,0 +1,40 @@
+{
+  "@@locale": "en",
+  "appTitle": "Flutter Starter",
+  "@appTitle": {
+    "description": "The application title shown in the app bar and task switcher"
+  },
+  "homeTagline": "Feature-first + Riverpod + go_router",
+  "@homeTagline": {
+    "description": "Tagline on the home screen"
+  },
+  "openCounterButton": "Open counter demo",
+  "@openCounterButton": {
+    "description": "Home screen button that navigates to the counter demo"
+  },
+  "openTodosButton": "Open todos demo (reference feature)",
+  "@openTodosButton": {
+    "description": "Home screen button that navigates to the todos reference feature"
+  },
+  "counterTitle": "Counter",
+  "@counterTitle": {
+    "description": "App bar title of the counter screen"
+  },
+  "todosTitle": "Todos",
+  "@todosTitle": {
+    "description": "App bar title of the todos screen"
+  },
+  "retryButton": "Retry",
+  "@retryButton": {
+    "description": "Button shown under an error message to retry the failed operation"
+  },
+  "routeNotFound": "Route not found: {uri}",
+  "@routeNotFound": {
+    "description": "Error page message for unknown routes",
+    "placeholders": {
+      "uri": {
+        "type": "String"
+      }
+    }
+  }
+}

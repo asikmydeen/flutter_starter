@@ -1,0 +1,16 @@
+# Pre-commit hooks. One-time install after clone:
+#   brew install lefthook   (or: dart pub global activate ... / see lefthook docs)
+#   lefthook install
+#
+# Kept fast on purpose (format + analyze only). Full verification
+# (./tool/verify.sh) runs in CI and before declaring tasks done.
+pre-commit:
+  parallel: false
+  commands:
+    format:
+      glob: "*.dart"
+      run: dart format {staged_files}
+      stage_fixed: true
+    analyze:
+      glob: "*.dart"
+      run: flutter analyze
