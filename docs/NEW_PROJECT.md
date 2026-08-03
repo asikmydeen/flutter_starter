@@ -3,6 +3,10 @@
 > Phase checklist for standing up a NEW project from this template.
 > For day-to-day work in this repo, see **AGENTS.md** — that is the
 > operating manual. This file is only for project bootstrap.
+>
+> Defining WHAT to build happens separately: the intake protocol
+> (`docs/INTAKE.md`) produces `docs/PRODUCT_SPEC.md`. This checklist is
+> the mechanical setup that runs alongside it.
 
 ## Golden rules
 

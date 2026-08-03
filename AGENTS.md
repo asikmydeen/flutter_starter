@@ -3,12 +3,22 @@
 > Directives for any AI coding agent working in this repo.
 > Bootstrapping a NEW project from this template? See `docs/NEW_PROJECT.md`.
 
-## The one rule
+## The two gates
 
-**A task is done when `./tool/verify.sh` passes.** It runs deps → l10n →
-codegen → format → analyze → tests → coverage floor. CI runs the exact same
-script (`--ci` mode adds codegen-drift and format-drift failures). Never
-declare a task complete without running it.
+1. **Asked to build an app (or a substantial feature set)?** Do NOT start
+   coding. Run the intake protocol in `docs/INTAKE.md` first: ask its
+   questions (in batches, with defaults), write the answers to
+   `docs/PRODUCT_SPEC.md`, get one approval, then build in the order the
+   protocol defines. If `docs/PRODUCT_SPEC.md` already exists, read it
+   before anything else — it is the source of truth. If it exists but the
+   request contradicts it, reconcile the spec first.
+2. **A task is done when `./tool/verify.sh` passes.** It runs deps → l10n →
+   codegen → format → analyze → tests → coverage floor. CI runs the exact
+   same script (`--ci` mode adds codegen-drift and format-drift failures).
+   Never declare a task complete without running it.
+
+Single small task on an existing app (bug fix, one endpoint, one screen
+tweak)? Gate 1 doesn't apply — just mirror existing patterns and hit gate 2.
 
 ## Commands
 

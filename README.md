@@ -75,6 +75,18 @@ make goldens     # regenerate golden screenshots after UI changes
 make verify      # everything, with coverage floor
 ```
 
+## Building an app with an AI agent
+
+Point the agent at this repo with your requirements (written spec, a
+reference website/app, or a rough idea). AGENTS.md gates it through:
+
+1. **Intake** (`docs/INTAKE.md`) — the agent interviews you: scope, backend,
+   auth, design source, platforms. Every question has a default, so you can
+   answer "defaults fine, except…". Answers land in `docs/PRODUCT_SPEC.md`.
+2. **Spec approval** — one document to review before any code is written.
+3. **Build loop** — walking skeleton first, then one verified feature per
+   cycle, with the spec tracking milestone status so any session can resume.
+
 ## New project?
 
 Follow `docs/NEW_PROJECT.md` (identity, branding, signing, stores).
