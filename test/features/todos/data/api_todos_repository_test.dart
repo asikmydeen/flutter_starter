@@ -26,8 +26,22 @@ void main() {
         dioAdapter.onGet(
           '/todos',
           (server) => server.reply(200, [
-            {'id': 1, 'title': 'Write tests', 'completed': false},
-            {'id': 2, 'title': 'Ship it', 'completed': true},
+            {
+              'id': 'todo-1',
+              'title': 'Write tests',
+              'completed': false,
+              'version': 1,
+              'createdAt': '2026-08-17T00:00:00.000Z',
+              'updatedAt': '2026-08-17T00:00:00.000Z',
+            },
+            {
+              'id': 'todo-2',
+              'title': 'Ship it',
+              'completed': true,
+              'version': 1,
+              'createdAt': '2026-08-17T00:00:00.000Z',
+              'updatedAt': '2026-08-17T00:00:00.000Z',
+            },
           ]),
         );
 
@@ -38,7 +52,14 @@ void main() {
         expect(todos, hasLength(2));
         expect(
           todos.first,
-          const Todo(id: 1, title: 'Write tests', completed: false),
+          Todo(
+            id: 'todo-1',
+            title: 'Write tests',
+            completed: false,
+            version: 1,
+            createdAt: DateTime.utc(2026, 8, 17),
+            updatedAt: DateTime.utc(2026, 8, 17),
+          ),
         );
       },
     );
@@ -89,6 +110,21 @@ void main() {
           (server) => server.reply(200, [
             {'unexpected': 'shape'},
           ]),
+        );
+
+        final result = await repository.fetchTodos();
+
+        expect(result, isA<Failure<List<Todo>>>());
+        expect((result as Failure<List<Todo>>).error, isA<ParsingException>());
+      },
+    );
+
+    test(
+      'should return Failure(ParsingException) when a list item is not JSON',
+      () async {
+        dioAdapter.onGet(
+          '/todos',
+          (server) => server.reply(200, ['not-an-object']),
         );
 
         final result = await repository.fetchTodos();

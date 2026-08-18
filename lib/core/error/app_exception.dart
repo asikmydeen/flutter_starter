@@ -7,28 +7,39 @@ import 'package:json_annotation/json_annotation.dart';
 /// into one of these before returning a `Failure`. UI code only ever deals
 /// with [AppException] — never with transport-level exceptions.
 sealed class AppException implements Exception {
-  const AppException(this.message, {this.cause});
+  const AppException(this.code, {this.cause});
 
-  /// Human-readable summary, safe to log and to show to users.
-  final String message;
+  /// Stable presentation-agnostic identity used for localization.
+  final AppExceptionCode code;
 
   /// The original exception, kept for logs — never shown to users.
   final Object? cause;
 
   @override
-  String toString() => 'AppException: $message';
+  String toString() => 'AppException(${code.name})';
+}
+
+/// Stable error identities. User-facing text belongs to localization.
+enum AppExceptionCode {
+  network,
+  api,
+  parsing,
+  unknown,
+  configuration,
+  authentication,
+  storage,
+  conflict,
 }
 
 /// Device is offline, DNS failed, or the request timed out.
 final class NetworkException extends AppException {
-  const NetworkException({super.cause})
-    : super('Could not reach the server. Check your connection.');
+  const NetworkException({super.cause}) : super(AppExceptionCode.network);
 }
 
 /// The server responded with a non-2xx status code.
 final class ApiException extends AppException {
   const ApiException({required this.statusCode, super.cause})
-    : super('The server returned an error ($statusCode).');
+    : super(AppExceptionCode.api);
 
   /// HTTP status code returned by the server.
   final int statusCode;
@@ -36,14 +47,34 @@ final class ApiException extends AppException {
 
 /// The response body could not be parsed into the expected model.
 final class ParsingException extends AppException {
-  const ParsingException({super.cause})
-    : super('Received an unexpected response format.');
+  const ParsingException({super.cause}) : super(AppExceptionCode.parsing);
 }
 
 /// Anything that does not fit the categories above.
 final class UnknownException extends AppException {
-  const UnknownException({super.cause})
-    : super('Something went wrong. Please try again.');
+  const UnknownException({super.cause}) : super(AppExceptionCode.unknown);
+}
+
+/// Required environment or vendor configuration is invalid.
+final class ConfigurationException extends AppException {
+  const ConfigurationException({super.cause})
+    : super(AppExceptionCode.configuration);
+}
+
+/// Authentication is missing, expired, or rejected.
+final class AuthenticationException extends AppException {
+  const AuthenticationException({super.cause})
+    : super(AppExceptionCode.authentication);
+}
+
+/// Local persistence failed.
+final class StorageException extends AppException {
+  const StorageException({super.cause}) : super(AppExceptionCode.storage);
+}
+
+/// A local mutation overlaps with a newer remote value.
+final class ConflictException extends AppException {
+  const ConflictException({super.cause}) : super(AppExceptionCode.conflict);
 }
 
 /// Maps a caught object into a typed [AppException].

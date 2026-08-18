@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "machineProfile": {
+    "status": "pending-qualification",
+    "flutter": "3.44.8",
+    "androidTargetApi": 36,
+    "iosMinimum": "13.0"
+  },
+  "budgets": {
+    "bootstrapSecondsP95": 3600,
+    "featureScaffoldSecondsP95": 300,
+    "featureScaffoldRuns": 20,
+    "coldStartMilliseconds": 3000,
+    "jankyFramePercent": 1.0,
+    "maximumRegressionPercent": 10.0
+  },
+  "measurements": []
+}

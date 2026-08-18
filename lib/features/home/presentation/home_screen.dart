@@ -14,24 +14,37 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.appTitle)),
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(l10n.homeTagline, textAlign: TextAlign.center),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => context.goNamed(RouteNames.counter),
-                child: Text(l10n.openCounterButton),
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: () => context.goNamed(RouteNames.todos),
-                child: Text(l10n.openTodosButton),
-              ),
-            ],
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l10n.homeTagline, textAlign: TextAlign.center),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: () => context.goNamed(RouteNames.counter),
+                  child: Text(l10n.openCounterButton),
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: () => context.goNamed(RouteNames.todos),
+                  child: Text(l10n.openTodosButton),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () => context.goNamed(RouteNames.diagnostics),
+                  child: Text(l10n.openDiagnosticsButton),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () => context.goNamed(RouteNames.privacy),
+                  child: Text(l10n.openPrivacyButton),
+                ),
+              ],
+            ),
           ),
         ),
       ),

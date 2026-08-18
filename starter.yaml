@@ -1,0 +1,34 @@
+schemaVersion: 1
+project:
+  packageName: flutter_starter
+  displayName: Flutter Starter
+  legalName: Flutter Starter
+  organization: dev.flutterstarter
+  defaultLocale: en
+  supportedLocales:
+    - en
+platforms:
+  android:
+    applicationId: dev.flutterstarter.app
+    minSdk: 24
+    targetSdk: 36
+  ios:
+    bundleId: dev.flutterstarter.app
+    minimumVersion: "13.0"
+environments:
+  dev:
+    apiBaseUrl: ""
+    firebaseProjectId: ""
+  staging:
+    apiBaseUrl: ""
+    firebaseProjectId: ""
+  prod:
+    apiBaseUrl: ""
+    firebaseProjectId: ""
+branding:
+  seedColor: "#2563EB"
+  logoPath: assets/images/logo.png
+  fontFamily: null
+readiness:
+  manifestPath: config/release_readiness.json
+  requiredStage: READY

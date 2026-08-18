@@ -5,5 +5,5 @@ import 'package:flutter_starter/core/config/app_config.dart';
 /// logger, ...). Safe to call repeatedly.
 void setUpTestConfig() {
   AppConfig.resetForTesting();
-  AppConfig.init('dev');
+  AppConfig.init('dev', apiBaseUrl: 'http://localhost:8080');
 }

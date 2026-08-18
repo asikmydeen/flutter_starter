@@ -1,92 +1,122 @@
 # Flutter Starter
 
-Production-shaped Flutter template optimized for **agentic (AI-driven) development**:
-feature-first + Riverpod 3 (codegen) + go_router + dio + freezed 3, with a
-reference feature, mechanically enforced conventions, and one-command verification.
+Opinionated Flutter production starter for secure API-backed, enterprise, and
+offline-capable iOS/Android apps. The approved target uses Riverpod 3, go_router,
+Dio, Freezed, Firebase platform services, Drift local data, and one verification
+command.
 
-**AI agents: read `AGENTS.md` first.** It is the operating manual.
+> Implementation status: M0 is in progress. The readiness tooling and baseline
+> hardening exist, but the repository is not release-ready until M1 reaches
+> `READY` with real publisher resources and protected GitHub environments.
 
-## Quick start
+AI agents must read `AGENTS.md` and `docs/PRODUCT_SPEC.md` first.
 
-```bash
-fvm install && fvm use        # SDK pinned in .fvmrc
-make setup                    # deps + l10n + codegen
-make run                      # run (dev flavor)
-./tool/verify.sh              # the definition of done
-```
-
-## What makes this template agent-proof
-
-- **Pinned everything** — exact Flutter version in `.fvmrc` (CI reads the
-  same file), `pubspec.lock` committed, generated code committed with a CI
-  drift gate.
-- **One verification command** — `./tool/verify.sh` runs deps, l10n, codegen,
-  format, analyze, tests, and a coverage floor. CI runs the identical script.
-- **Reference feature** — `lib/features/todos/` exercises every layer
-  (freezed entity, DTO, dio repository returning `Result`, `@riverpod` async
-  controller, screen with full `AsyncValue` handling) with a matching test
-  for each layer. New code mirrors it.
-- **Feature generator** — `make feature NAME=x` stamps the canonical layout
-  with test skeletons; no hand-rolled structure drift.
-- **Typed failures** — sealed `Result` + `AppException`; repositories never
-  throw, screens always render loading/data/error.
-- **Guardrails in CI** — format, analyze, tests, coverage floor, Android
-  smoke build, secret scanning (gitleaks), dependency CVE audit (osv-scanner).
-
-## Structure
-
-```
-lib/
-├── bootstrap.dart        # config init + ALL global error handling
-├── core/                 # cross-cutting: config, error, logging, network,
-│   │                     #   result, router, theme
-│   └── ...
-├── features/
-│   ├── counter/          # minimal sync-notifier example
-│   ├── home/
-│   └── todos/            # ★ REFERENCE FEATURE — mirror this
-│       ├── domain/       # entity (freezed) + repository interface
-│       ├── data/         # DTO (json) + dio repository → Result
-│       ├── application/  # @riverpod async controller
-│       └── presentation/ # screen with exhaustive AsyncValue switch
-├── l10n/                 # ARB sources + generated localizations
-└── main.dart
-tool/
-├── verify.sh             # the definition of done (CI runs the same)
-└── new_feature.dart      # feature scaffolder
-```
-
-## Environments
+## Contributor setup
 
 ```bash
-flutter run --dart-define=ENV=dev
-flutter build appbundle --dart-define=ENV=prod
-flutter build ipa       --dart-define=ENV=prod
+brew install fvm
+fvm install
+make setup
+make verify
 ```
 
-Unknown `ENV` values fail at startup by design. All env-dependent values go
-through `lib/core/config/app_config.dart`.
+The exact SDK is pinned in `.fvmrc`. Generated files and `pubspec.lock` are
+committed.
 
-## Testing
+## New-project gate
+
+Publishing readiness runs before generated-project dependency installation,
+branding, or feature work:
 
 ```bash
-make test        # unit + widget (goldens excluded)
-make goldens     # regenerate golden screenshots after UI changes
-make verify      # everything, with coverage floor
+fvm dart run tool/release_readiness.dart init
+fvm dart run tool/release_readiness.dart resume --interactive
+fvm dart run tool/release_readiness.dart validate --live
+fvm dart run tool/release_readiness.dart plan
 ```
 
-## Building an app with an AI agent
+The wizard collects shared, App Store, Google Play, Firebase, signing, metadata,
+privacy, reviewer, and GitHub inputs. It never creates initial store app records
+or stores credential values in `.env`. Local environment files contain
+`file://` or `keychain://` references; credentials remain in external `0600`
+files, the OS keychain, and protected GitHub environment secrets.
 
-Point the agent at this repo with your requirements (written spec, a
-reference website/app, or a rough idea). AGENTS.md gates it through:
+Project generation stays blocked until:
 
-1. **Intake** (`docs/INTAKE.md`) — the agent interviews you: scope, backend,
-   auth, design source, platforms. Every question has a default, so you can
-   answer "defaults fine, except…". Answers land in `docs/PRODUCT_SPEC.md`.
-2. **Spec approval** — one document to review before any code is written.
-3. **Build loop** — walking skeleton first, then one verified feature per
-   cycle, with the spec tracking milestone status so any session can resume.
+`DRAFT -> ANSWERED -> RESOURCES_VALIDATED -> GITHUB_CONFIGURED -> APPROVED -> READY`
 
-## New project?
+## Commands
 
-Follow `docs/NEW_PROJECT.md` (identity, branding, signing, stores).
+| Task | Command |
+|---|---|
+| Toolchain and manifest checks | `make doctor` |
+| Readiness status | `make readiness` |
+| Redacted GitHub mutation plan | `make readiness-plan` |
+| Dependencies and code generation | `make setup` |
+| Unit/widget/contract tests | `make test` |
+| Compare goldens | `make goldens-check` |
+| Intentionally regenerate goldens | `make goldens-update` |
+| Definition of done | `make verify` |
+| Run development app | `make run API_BASE_URL=http://localhost:8080` |
+
+`make feature NAME=x` is the pre-M5 generator. It is intentionally not yet
+AC-2 compliant and must not be presented as complete project scaffolding.
+
+## Agent skills
+
+The repository commits official Dart and Flutter skills under `.agents/skills`
+and loads them through `opencode.json`. Restore exact GitHub-sourced skills with:
+
+```bash
+npx --yes skills@1.5.17 experimental_install
+npx --yes @skills-hub-ai/cli restore
+```
+
+Installed sources:
+
+- `flutter/agent-plugins`: Flutter workflows and UI/testing/routing skills.
+- `dart-lang/skills`: Dart testing, analysis, CLI, FFI, and language skills.
+- `flutter-dart-skills-flutter-adaptive-ui` v1.0.1: signed Adaptive UI skill.
+
+Restart OpenCode after skill or `opencode.json` changes; configuration and
+skills are loaded only at process startup.
+
+## Architecture
+
+```text
+lib/features/<name>/
+  domain/        pure entities and repository contracts
+  data/          DTOs, remote/local sources, repository implementations
+  application/   generated Riverpod controllers
+  presentation/  localized adaptive UI
+```
+
+- The custom HTTPS API is authoritative.
+- Firebase provides identity and platform services, not a second domain store.
+- Drift is the local source of truth; writes use a durable outbox.
+- Repositories return `Result<T>` and do not leak transport exceptions.
+- Errors carry stable codes and are localized only in presentation.
+- Navigation uses named routes.
+- Secrets never enter Dart defines, `AppConfig`, source, logs, or app assets.
+
+The existing Todos implementation is still the layering/test-style reference.
+M2-M4 will replace its online-only behavior with the approved offline slice.
+
+## Quality gates
+
+`./tool/verify.sh` runs manifest validation, forbidden-material checks,
+dependencies, l10n, codegen, formatting, analysis, tests, and coverage.
+
+- Global handwritten line coverage: at least 90%.
+- Auth/config/storage/sync coverage: at least 95%.
+- Omitted executable Dart files count as uncovered.
+- Security and release compilation run in dedicated pinned workflows.
+
+## Milestones
+
+Implementation follows `docs/PRODUCT_SPEC.md`: M0 contracts, M1 readiness, M2
+walking skeleton, M3 foundations, M4 reference slice, M5 generators, M6 gates,
+M7 release automation, and M8 qualification. Every milestone passes verification
+before the next begins.
+
+See `docs/NEW_PROJECT.md` for the fail-closed bootstrap sequence.

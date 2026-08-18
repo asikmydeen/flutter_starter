@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter_starter/core/error/app_exception.dart';
 import 'package:flutter_starter/features/todos/application/todos_controller.dart';
+import 'package:flutter_starter/l10n/app_exception_localization.dart';
 import 'package:flutter_starter/l10n/gen/app_localizations.dart';
 
 /// Reference screen: renders every `AsyncValue` state explicitly and
@@ -45,7 +46,9 @@ class TodosScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                error is AppException ? error.message : '$error',
+                error is AppException
+                    ? localizeAppException(l10n, error)
+                    : l10n.unknownError,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),

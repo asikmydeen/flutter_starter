@@ -1,37 +1,36 @@
 ---
-name: ✨ Feature request
-about: Suggest a new feature or enhancement
+name: Feature request
+about: Propose a product-spec-aligned capability
 title: "[Feature]: "
 labels: ["enhancement", "triage"]
 assignees: []
 ---
 
-## Problem / motivation
+## Problem and users
 
-<!-- What problem does this solve? Who benefits? "As a <user>, I want <goal> so that <reason>." -->
+## Product-spec mapping
 
-## Proposed solution
+- Milestone and acceptance IDs:
+- Required earlier milestones:
+- Feature folder and foundations:
 
-<!-- Describe the feature and how it should behave. -->
+## Proposed behavior
 
-## Feature area
+## Data and reliability
 
-<!-- Which feature folder does this belong to? e.g. features/auth, features/home, core -->
+- Authoritative data source:
+- Offline/read-cache/outbox/conflict behavior:
+- Error and observability behavior:
 
-## Alternatives considered
+## Security, privacy, and accessibility
 
-<!-- Other approaches you thought about and why you rejected them. -->
+- Data classification and retention:
+- Auth/role/permission impact:
+- Localization, RTL, text-scale, semantics, and responsive behavior:
 
-## Acceptance criteria
+## Acceptance evidence
 
-- [ ]
-- [ ]
-- [ ]
+<!-- Use measurable statements, not checkboxes. -->
 
-## Design / UX notes
-
-<!-- Mockups, links, or references. Delete if N/A. -->
-
-## Additional context
-
-<!-- Dependencies, related issues, technical constraints, etc. -->
+Requests that introduce alternative stacks or optional capability packs require
+product-spec reconciliation before implementation.

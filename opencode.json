@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "skills": {
+    "paths": [
+      ".agents/skills",
+      "~/.opencode/skills"
+    ]
+  },
+  "references": {
+    "flutter-agent-plugins": {
+      "repository": "flutter/agent-plugins",
+      "branch": "main",
+      "description": "Official Flutter agent skills, plugin metadata, MCP configuration, and workflow rules.",
+      "hidden": true
+    },
+    "dart-agent-skills": {
+      "repository": "dart-lang/skills",
+      "branch": "main",
+      "description": "Official Dart team agent skills and supporting resources.",
+      "hidden": true
+    }
+  }
+}

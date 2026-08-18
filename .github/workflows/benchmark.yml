@@ -1,0 +1,57 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  feature-scaffold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Read pinned Flutter version
+        run: echo "FLUTTER_VERSION=$(jq -r .flutter .fvmrc)" >> "$GITHUB_ENV"
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Prepare isolated READY fixture
+        run: |
+          mkdir -p "$RUNNER_TEMP/feature-benchmark/.release-readiness"
+          mkdir -p "$RUNNER_TEMP/feature-benchmark/lib/core/router"
+          mkdir -p "$RUNNER_TEMP/feature-benchmark/lib/l10n/arb"
+          cp lib/core/router/app_router.dart "$RUNNER_TEMP/feature-benchmark/lib/core/router/app_router.dart"
+          cp lib/l10n/arb/app_en.arb "$RUNNER_TEMP/feature-benchmark/lib/l10n/arb/app_en.arb"
+          cat > "$RUNNER_TEMP/feature-benchmark/.release-readiness/state.json" <<'JSON'
+          {
+            "stage": "READY",
+            "inputsDigest": "benchmark-fixture",
+            "approvedDigest": "benchmark-fixture"
+          }
+          JSON
+      - name: Run 20 warm-cache feature scaffold trials
+        run: >-
+          dart run tool/benchmark.dart
+          --name=feature-scaffold
+          --runs=20
+          --threshold-seconds=300
+          --working-directory="$GITHUB_WORKSPACE"
+          --output=build/benchmarks/feature.json
+          -- env
+          FEATURE_GENERATOR_ROOT="$RUNNER_TEMP/feature-benchmark"
+          dart run "$GITHUB_WORKSPACE/tool/new_feature.dart"
+          benchmark_{run}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: feature-benchmark
+          path: build/benchmarks/feature.json
+          if-no-files-found: error
+          retention-days: 30

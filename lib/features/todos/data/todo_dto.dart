@@ -12,9 +12,13 @@ part 'todo_dto.g.dart';
 abstract class TodoDto with _$TodoDto {
   /// Creates a DTO from its fields.
   const factory TodoDto({
-    required int id,
+    required String id,
     required String title,
     required bool completed,
+    required int version,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    DateTime? deletedAt,
   }) = _TodoDto;
 
   const TodoDto._();
@@ -24,5 +28,13 @@ abstract class TodoDto with _$TodoDto {
       _$TodoDtoFromJson(json);
 
   /// Converts this wire model into the domain entity.
-  Todo toDomain() => Todo(id: id, title: title, completed: completed);
+  Todo toDomain() => Todo(
+    id: id,
+    title: title,
+    completed: completed,
+    version: version,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    deletedAt: deletedAt,
+  );
 }

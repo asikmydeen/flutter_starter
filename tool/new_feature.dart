@@ -13,10 +13,12 @@
 //   lib/features/<name>/presentation/<name>_screen.dart
 //   test/features/<name>/... (matching test skeletons)
 //
-// After generating: run codegen, add a route in core/router/app_router.dart,
-// replace the TODO(agent) markers, then ./tool/verify.sh.
+// Generation is blocked until release readiness is READY.
 // ignore_for_file: avoid_print
+import 'dart:convert';
 import 'dart:io';
+
+import 'package:yaml/yaml.dart';
 
 void main(List<String> args) {
   if (args.length != 1 || !RegExp(r'^[a-z][a-z0-9_]*$').hasMatch(args[0])) {
@@ -30,53 +32,143 @@ void main(List<String> args) {
       .join();
   final camel = pascal[0].toLowerCase() + pascal.substring(1);
 
-  final root = File(Platform.script.toFilePath()).parent.parent.path;
+  final root =
+      Platform.environment['FEATURE_GENERATOR_ROOT'] ??
+      File(Platform.script.toFilePath()).parent.parent.path;
+  final readinessFile = File('$root/.release-readiness/state.json');
+  final readiness = readinessFile.existsSync()
+      ? jsonDecode(readinessFile.readAsStringSync()) as Map<String, dynamic>
+      : const <String, dynamic>{};
+  if (readiness['stage'] != 'READY' ||
+      readiness['approvedDigest'] == null ||
+      readiness['approvedDigest'] != readiness['inputsDigest']) {
+    stderr.writeln(
+      'ERROR: project generation is blocked until release readiness is READY.',
+    );
+    exit(3);
+  }
   final featureDir = '$root/lib/features/$snake';
+  final routerFile = File('$root/lib/core/router/app_router.dart');
+  final arbFile = File('$root/lib/l10n/arb/app_en.arb');
+  if (!routerFile.existsSync() || !arbFile.existsSync()) {
+    stderr.writeln('ERROR: router and English ARB files are required.');
+    exit(1);
+  }
+  final routerBefore = routerFile.readAsStringSync();
+  final arbBefore = arbFile.readAsStringSync();
+  if (!routerBefore.contains('// feature-generator-imports') ||
+      !routerBefore.contains('// feature-generator-route-names') ||
+      !routerBefore.contains('// feature-generator-routes')) {
+    stderr.writeln('ERROR: feature-generator router markers are missing.');
+    exit(1);
+  }
+  final titleKey = '${camel}Title';
+  final arb = jsonDecode(arbBefore)! as Map<String, dynamic>;
+  if (arb.containsKey(titleKey)) {
+    stderr.writeln('ERROR: localization key already exists: $titleKey');
+    exit(1);
+  }
   if (Directory(featureDir).existsSync()) {
     stderr.writeln('ERROR: $featureDir already exists.');
     exit(1);
   }
 
-  final files = <String, String>{
-    '$featureDir/domain/$snake.dart': _entity(snake, pascal),
-    '$featureDir/domain/${snake}_repository.dart': _repoInterface(
-      snake,
-      pascal,
-    ),
-    '$featureDir/data/${snake}_dto.dart': _dto(snake, pascal),
-    '$featureDir/data/api_${snake}_repository.dart': _repoImpl(snake, pascal),
-    '$featureDir/application/${snake}_controller.dart': _controller(
-      snake,
-      pascal,
-      camel,
-    ),
-    '$featureDir/presentation/${snake}_screen.dart': _screen(
-      snake,
-      pascal,
-      camel,
-    ),
-    '$root/test/features/$snake/application/${snake}_controller_test.dart':
-        _controllerTest(snake, pascal, camel),
-  };
+  final packageName = _readPackageName(root);
+  final files =
+      <String, String>{
+        '$featureDir/domain/$snake.dart': _entity(snake, pascal),
+        '$featureDir/domain/${snake}_repository.dart': _repoInterface(
+          snake,
+          pascal,
+        ),
+        '$featureDir/data/${snake}_dto.dart': _dto(snake, pascal),
+        '$featureDir/data/api_${snake}_repository.dart': _repoImpl(
+          snake,
+          pascal,
+        ),
+        '$featureDir/application/${snake}_controller.dart': _controller(
+          snake,
+          pascal,
+          camel,
+        ),
+        '$featureDir/presentation/${snake}_screen.dart': _screen(
+          snake,
+          pascal,
+          camel,
+        ),
+        '$root/test/features/$snake/application/${snake}_controller_test.dart':
+            _controllerTest(snake, pascal, camel),
+        '$root/test/features/$snake/data/api_${snake}_repository_test.dart':
+            _repositoryTest(snake, pascal),
+        '$root/test/features/$snake/presentation/${snake}_screen_test.dart':
+            _screenTest(snake, pascal, camel),
+      }..updateAll(
+        (path, content) => content.replaceAll(
+          'package:flutter_starter/',
+          'package:$packageName/',
+        ),
+      );
 
-  for (final MapEntry(key: path, value: content) in files.entries) {
-    File(path)
-      ..createSync(recursive: true)
-      ..writeAsStringSync(content);
-    print('created ${path.replaceFirst('$root/', '')}');
+  final collisions = files.keys
+      .where((path) => File(path).existsSync())
+      .toList();
+  if (collisions.isNotEmpty) {
+    stderr.writeln('ERROR: generation would overwrite existing files:');
+    collisions.forEach(stderr.writeln);
+    exit(1);
   }
 
-  // Format generated files so they pass lints out of the box.
-  Process.runSync('dart', ['format', ...files.keys]);
+  try {
+    for (final MapEntry(key: path, value: content) in files.entries) {
+      File(path)
+        ..createSync(recursive: true)
+        ..writeAsStringSync(content);
+      print('created ${path.replaceFirst('$root/', '')}');
+    }
+
+    _registerFeature(
+      routerFile: routerFile,
+      arbFile: arbFile,
+      routerBefore: routerBefore,
+      arb: arb,
+      snake: snake,
+      pascal: pascal,
+      camel: camel,
+    );
+
+    final format = Process.runSync(Platform.resolvedExecutable, [
+      'format',
+      ...files.keys,
+      routerFile.path,
+    ]);
+    if (format.exitCode != 0) {
+      throw ProcessException(
+        Platform.resolvedExecutable,
+        ['format'],
+        '${format.stderr}',
+        format.exitCode,
+      );
+    }
+  } on Exception catch (error) {
+    for (final path in files.keys) {
+      final file = File(path);
+      if (file.existsSync()) file.deleteSync();
+    }
+    if (Directory(featureDir).existsSync()) {
+      Directory(featureDir).deleteSync(recursive: true);
+    }
+    routerFile.writeAsStringSync(routerBefore);
+    arbFile.writeAsStringSync(arbBefore);
+    stderr.writeln('ERROR: generation rolled back: $error');
+    exit(1);
+  }
 
   print('''
 
 Next steps (in order):
-  1. Replace every TODO(agent) marker with real fields/logic.
-  2. dart run build_runner build --delete-conflicting-outputs
-  3. Add a route in lib/core/router/app_router.dart (RouteNames + GoRoute).
-  4. Add user-facing strings to lib/l10n/arb/app_en.arb, run: flutter gen-l10n
-  5. ./tool/verify.sh
+  1. fvm dart run build_runner build
+  2. fvm flutter gen-l10n
+  3. ./tool/verify.sh
 ''');
 }
 
@@ -91,8 +183,8 @@ part '$snake.freezed.dart';
 abstract class $pascal with _\$$pascal {
   /// Creates a $snake.
   const factory $pascal({
-    required int id,
-    // TODO(agent): add fields.
+    required String id,
+    required String name,
   }) = _$pascal;
 }
 ''';
@@ -123,8 +215,8 @@ part '${snake}_dto.g.dart';
 abstract class ${pascal}Dto with _\$${pascal}Dto {
   /// Creates a DTO from its fields.
   const factory ${pascal}Dto({
-    required int id,
-    // TODO(agent): mirror the API fields.
+    required String id,
+    required String name,
   }) = _${pascal}Dto;
 
   const ${pascal}Dto._();
@@ -134,7 +226,7 @@ abstract class ${pascal}Dto with _\$${pascal}Dto {
       _\$${pascal}DtoFromJson(json);
 
   /// Converts this wire model into the domain entity.
-  $pascal toDomain() => $pascal(id: id);
+  $pascal toDomain() => $pascal(id: id, name: name);
 }
 ''';
 
@@ -157,8 +249,7 @@ class Api${pascal}Repository implements ${pascal}Repository {
   @override
   Future<Result<List<$pascal>>> fetch${pascal}s() async {
     try {
-      // TODO(agent): set the real endpoint path.
-      final response = await _dio.get<List<dynamic>>('/${snake}s');
+      final response = await _dio.get<List<dynamic>>('/v1/${snake}s');
       final data = response.data;
       if (data == null) {
         return const Failure(ParsingException());
@@ -167,6 +258,10 @@ class Api${pascal}Repository implements ${pascal}Repository {
           .map((e) => ${pascal}Dto.fromJson(e as Map<String, dynamic>).toDomain())
           .toList();
       return Success(items);
+      // JSON collection casts throw TypeError, which this repository maps.
+      // ignore: avoid_catching_errors
+    } on TypeError catch (e) {
+      return Failure(mapToAppException(e));
     } on Exception catch (e) {
       return Failure(mapToAppException(e));
     }
@@ -216,6 +311,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_starter/core/error/app_exception.dart';
 import 'package:flutter_starter/features/$snake/application/${snake}_controller.dart';
+import 'package:flutter_starter/l10n/app_exception_localization.dart';
+import 'package:flutter_starter/l10n/gen/app_localizations.dart';
 
 /// Screen for the $snake feature. Renders every AsyncValue state.
 class ${pascal}Screen extends ConsumerWidget {
@@ -227,14 +324,12 @@ class ${pascal}Screen extends ConsumerWidget {
     final items = ref.watch(${camel}ControllerProvider);
 
     return Scaffold(
-      // TODO(agent): move strings to lib/l10n/arb/app_en.arb.
-      appBar: AppBar(title: const Text('$pascal')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).${camel}Title)),
       body: switch (items) {
         AsyncData(:final value) => ListView.builder(
             itemCount: value.length,
             itemBuilder: (context, index) => ListTile(
-              // TODO(agent): render the entity.
-              title: Text('\${value[index].id}'),
+              title: Text(value[index].name),
             ),
           ),
         AsyncError(:final error) => Center(
@@ -242,14 +337,16 @@ class ${pascal}Screen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  error is AppException ? error.message : '\$error',
+                  error is AppException
+                      ? localizeAppException(AppLocalizations.of(context), error)
+                      : AppLocalizations.of(context).unknownError,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () =>
                       ref.read(${camel}ControllerProvider.notifier).refresh(),
-                  child: const Text('Retry'),
+                  child: Text(AppLocalizations.of(context).retryButton),
                 ),
               ],
             ),
@@ -294,8 +391,7 @@ void main() {
         container.listen(${camel}ControllerProvider, (_, _) {});
 
     test('should expose items when the repository succeeds', () async {
-      // TODO(agent): build a realistic fixture.
-      const items = [$pascal(id: 1)];
+      const items = [$pascal(id: 'id-1', name: 'Example')];
       when(
         repository.fetch${pascal}s,
       ).thenAnswer((_) async => const Success(items));
@@ -320,3 +416,125 @@ void main() {
   });
 }
 ''';
+
+String _repositoryTest(String snake, String pascal) =>
+    '''
+import 'package:dio/dio.dart';
+import 'package:flutter_starter/core/result/result.dart';
+import 'package:flutter_starter/features/$snake/data/api_${snake}_repository.dart';
+import 'package:flutter_starter/features/$snake/domain/$snake.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http_mock_adapter/http_mock_adapter.dart';
+
+void main() {
+  test('should parse ${snake}s from the API', () async {
+    final dio = Dio(BaseOptions(baseUrl: 'https://api.test'));
+    final adapter = DioAdapter(dio: dio)
+      ..onGet(
+        '/v1/${snake}s',
+        (server) => server.reply(200, [
+          {'id': 'id-1', 'name': 'Example'},
+        ]),
+      );
+    final repository = Api${pascal}Repository(dio);
+
+    final result = await repository.fetch${pascal}s();
+
+    expect(result, isA<Success<List<$pascal>>>());
+    expect((result as Success<List<$pascal>>).value.single.name, 'Example');
+    expect(adapter, isNotNull);
+  });
+}
+''';
+
+String _screenTest(String snake, String pascal, String camel) =>
+    '''
+import 'package:flutter_starter/core/result/result.dart';
+import 'package:flutter_starter/features/$snake/application/${snake}_controller.dart';
+import 'package:flutter_starter/features/$snake/domain/$snake.dart';
+import 'package:flutter_starter/features/$snake/domain/${snake}_repository.dart';
+import 'package:flutter_starter/features/$snake/presentation/${snake}_screen.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+import '../../../helpers/helpers.dart';
+
+class Mock${pascal}Repository extends Mock implements ${pascal}Repository {}
+
+void main() {
+  testWidgets('should render fetched ${snake}s', (tester) async {
+    final repository = Mock${pascal}Repository();
+    when(repository.fetch${pascal}s).thenAnswer(
+      (_) async => const Success([$pascal(id: 'id-1', name: 'Example')]),
+    );
+
+    await tester.pumpApp(
+      const ${pascal}Screen(),
+      overrides: [${camel}RepositoryProvider.overrideWithValue(repository)],
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Example'), findsOneWidget);
+  });
+}
+''';
+
+void _registerFeature({
+  required File routerFile,
+  required File arbFile,
+  required String routerBefore,
+  required Map<String, dynamic> arb,
+  required String snake,
+  required String pascal,
+  required String camel,
+}) {
+  final routePath = snake.replaceAll('_', '-');
+  final router = routerBefore
+      .replaceFirst(
+        '// feature-generator-imports',
+        "import 'package:flutter_starter/features/$snake/presentation/"
+            "${snake}_screen.dart';\n// feature-generator-imports",
+      )
+      .replaceFirst(
+        '  // feature-generator-route-names',
+        "  static const $camel = '$camel';\n"
+            '  // feature-generator-route-names',
+      )
+      .replaceFirst(
+        '          // feature-generator-routes',
+        '''
+          GoRoute(
+            path: '$routePath',
+            name: RouteNames.$camel,
+            builder: (context, state) => const ${pascal}Screen(),
+          ),
+          // feature-generator-routes''',
+      );
+  routerFile.writeAsStringSync(router);
+
+  final titleKey = '${camel}Title';
+  arb
+    ..[titleKey] = pascal
+    ..['@$titleKey'] = {
+      'description': 'App bar title for the generated $snake feature',
+    };
+  arbFile.writeAsStringSync(
+    '${const JsonEncoder.withIndent('  ').convert(arb)}\n',
+  );
+}
+
+String _readPackageName(String root) {
+  final manifest = File('$root/starter.yaml');
+  if (!manifest.existsSync()) return 'flutter_starter';
+  final yaml = loadYaml(manifest.readAsStringSync());
+  if (yaml is! YamlMap || yaml['project'] is! YamlMap) {
+    throw const FormatException(
+      'starter.yaml project configuration is invalid',
+    );
+  }
+  final name = (yaml['project']! as YamlMap)['packageName'];
+  if (name is! String || !RegExp(r'^[a-z][a-z0-9_]*$').hasMatch(name)) {
+    throw const FormatException('starter.yaml packageName is invalid');
+  }
+  return name;
+}

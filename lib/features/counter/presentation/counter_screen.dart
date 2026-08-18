@@ -25,12 +25,14 @@ class CounterScreen extends ConsumerWidget {
         children: [
           FloatingActionButton(
             heroTag: 'inc',
+            tooltip: l10n.incrementCounter,
             onPressed: controller.increment,
             child: const Icon(Icons.add),
           ),
           const SizedBox(height: 12),
           FloatingActionButton(
             heroTag: 'dec',
+            tooltip: l10n.decrementCounter,
             onPressed: controller.decrement,
             child: const Icon(Icons.remove),
           ),

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flutterstarter.dev/schemas/release-readiness.schema.json",
+  "title": "Release readiness manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "toolVersion", "stage", "applicability", "questionnaire", "requiredEvidence", "answers", "secretReferences", "evidence", "approval"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "toolVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "stage": {"enum": ["DRAFT", "ANSWERED", "RESOURCES_VALIDATED", "GITHUB_CONFIGURED", "APPROVED", "READY"]},
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["apple", "googlePlay", "firebase", "github"],
+      "properties": {
+        "apple": {"enum": ["required", "notApplicable"]},
+        "googlePlay": {"enum": ["required", "notApplicable"]},
+        "firebase": {"enum": ["required", "notApplicable"]},
+        "github": {"enum": ["required", "notApplicable"]}
+      }
+    },
+    "questionnaire": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "prompt", "type", "required"],
+        "properties": {
+          "key": {"type": "string", "minLength": 1},
+          "prompt": {"type": "string", "minLength": 1},
+          "type": {"enum": ["string", "bool", "list", "secretReference"]},
+          "required": {"type": "boolean"}
+        }
+      }
+    },
+    "requiredEvidence": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "answers": {"type": "object"},
+    "secretReferences": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "pattern": "^(|file://|keychain://)"}
+    },
+    "evidence": {"type": "object"},
+    "approval": {"type": ["object", "null"]}
+  }
+}

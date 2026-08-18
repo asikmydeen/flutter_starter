@@ -1,3 +1,4 @@
+import 'package:flutter_starter/core/sync/sync_models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'todo.freezed.dart';
@@ -10,8 +11,13 @@ part 'todo.freezed.dart';
 abstract class Todo with _$Todo {
   /// Creates a todo.
   const factory Todo({
-    required int id,
+    required String id,
     required String title,
     required bool completed,
+    required int version,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    DateTime? deletedAt,
+    @Default(EntitySyncState.synced) EntitySyncState syncState,
   }) = _Todo;
 }

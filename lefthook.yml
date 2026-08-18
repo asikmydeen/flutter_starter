@@ -9,8 +9,11 @@ pre-commit:
   commands:
     format:
       glob: "*.dart"
-      run: dart format {staged_files}
+      run: fvm dart format {staged_files}
       stage_fixed: true
     analyze:
       glob: "*.dart"
-      run: flutter analyze
+      run: fvm flutter analyze
+    manifests:
+      glob: "{starter.yaml,config/**/*.json,metadata/store/**/*.json}"
+      run: fvm dart run tool/validate_manifests.dart

@@ -1,50 +1,33 @@
-<!-- Keep PRs small and focused. Fill out every section. -->
-
 ## Summary
 
-<!-- What does this PR do and why? 1–3 sentences. -->
+<!-- What changed and why? -->
 
-Closes #<!-- issue number -->
+## Scope
 
-## Type of change
+- Product milestone and acceptance IDs:
+- Dependency milestone status:
+- Issue:
 
-- [ ] ✨ Feature (`feat`)
-- [ ] 🐛 Bug fix (`fix`)
-- [ ] ♻️ Refactor (no behavior change)
-- [ ] 🧹 Chore / tooling (`chore`)
-- [ ] 📝 Docs (`docs`)
-- [ ] ✅ Tests (`test`)
+## Verification
 
-## Changes
+- `./tool/verify.sh` result:
+- Dedicated integration/contract result:
+- Accessibility, RTL, text-scale, and golden evidence for UI changes:
+- Android/iOS compilation evidence for platform changes:
 
-<!-- Bullet the key changes so reviewers can orient quickly. -->
+## Security and privacy
 
--
--
+- Readiness/secret/provider impact:
+- Data collection, retention, logging, or permission impact:
+- Confirmation that no credentials, private metadata, or production config are present:
+- Generated files and lockfile updated:
 
-## Screenshots / recordings
+## Ownership boundaries
 
-<!-- For any UI change, attach before/after screenshots or a screen recording. Delete if N/A. -->
+- M1 environment protections changed? If yes, include review evidence.
+- M6 gate policy changed? If yes, include failure/pass tests.
+- M7 release consumption changed? Confirm it does not create/weaken environments.
 
-## How to test
+## Review notes
 
-<!-- Steps a reviewer can follow to verify locally. -->
-
-1.
-2.
-
-## Checklist
-
-- [ ] Follows feature-first + layered structure (`data / domain / application / presentation`)
-- [ ] Uses the standard stack (Riverpod, go_router, dio, freezed) — no new state lib
-- [ ] No hardcoded secrets/env values (routed through `AppConfig` + `--dart-define`)
-- [ ] Codegen regenerated (`dart run build_runner build --delete-conflicting-outputs`)
-- [ ] `dart format .` applied
-- [ ] `flutter analyze` clean
-- [ ] `flutter test` green
-- [ ] Added/updated tests for new logic
-- [ ] Updated docs (README / AGENTS.md) if behavior or setup changed
-
-## Notes for reviewers
-
-<!-- Anything reviewers should pay special attention to, trade-offs, follow-ups, etc. -->
+<!-- Risks, tradeoffs, and focused reviewer guidance. -->

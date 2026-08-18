@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "status": "DRAFT",
+  "identity": {
+    "defaultLocale": "en",
+    "androidApplicationId": "dev.flutterstarter.app",
+    "iosBundleId": "dev.flutterstarter.app"
+  },
+  "releasePolicy": {
+    "androidTrack": "internal",
+    "iosTrack": "testflight",
+    "managedPublishing": true
+  },
+  "localizations": {},
+  "privacy": {
+    "privacyPolicyUrl": "",
+    "accountDeletionUrl": "",
+    "collectsData": null,
+    "showsAds": null
+  },
+  "apple": {
+    "appStoreConnectAppRecordId": "",
+    "sku": ""
+  },
+  "googlePlay": {
+    "developerId": "",
+    "appRecordCreated": false
+  },
+  "assetsManifest": "metadata/store/assets/manifest.json",
+  "privateMetadataRef": ""
+}

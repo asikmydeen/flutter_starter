@@ -33,43 +33,56 @@ class AppConfig {
     if (config == null) {
       throw StateError(
         'AppConfig.instance accessed before AppConfig.init(). '
-        'Call AppConfig.init(env) in main()/bootstrap() before runApp(). '
-        'In tests, call AppConfig.init("dev") in setUp().',
+        'Call AppConfig.init(env, apiBaseUrl: url) before runApp(). '
+        'In tests, use setUpTestConfig().',
       );
     }
     return config;
   }
 
-  /// Selects the configuration for [env]. Must be called exactly once
+  /// Selects the configuration for [env] and validated [apiBaseUrl].
+  /// Must be called exactly once
   /// before the app (or a test that touches config) runs.
   ///
   /// Throws [ArgumentError] on an unknown environment instead of silently
   /// falling back — a wrong `--dart-define` should break the build, not
   /// ship pointing at the wrong backend.
-  static void init(String env) {
-    _instance = switch (env) {
-      'prod' => AppConfig._(
-        env: 'prod',
-        apiBaseUrl: 'https://api.example.com',
-        enableLogging: false,
-      ),
-      'staging' => AppConfig._(
-        env: 'staging',
-        apiBaseUrl: 'https://staging.api.example.com',
-        enableLogging: true,
-      ),
-      'dev' => AppConfig._(
-        env: 'dev',
-        apiBaseUrl: 'https://dev.api.example.com',
-        enableLogging: true,
-      ),
-      _ => throw ArgumentError.value(
+  static void init(String env, {required String apiBaseUrl}) {
+    if (!validEnvs.contains(env)) {
+      throw ArgumentError.value(
         env,
         'env',
         'Unknown environment. Valid values: ${validEnvs.join(", ")}. '
             'Pass one with --dart-define=ENV=<value>.',
-      ),
-    };
+      );
+    }
+    final uri = Uri.tryParse(apiBaseUrl);
+    final isLocalDev =
+        env == 'dev' &&
+        uri != null &&
+        (uri.host == 'localhost' || uri.host == '127.0.0.1');
+    final hasSecureScheme =
+        uri != null &&
+        (uri.scheme == 'https' || isLocalDev && uri.scheme == 'http');
+    final isPlaceholder =
+        uri == null ||
+        uri.host.isEmpty ||
+        uri.host.endsWith('.example.com') ||
+        uri.host.endsWith('.example.invalid') ||
+        uri.host.endsWith('.test');
+    if (!hasSecureScheme || isPlaceholder) {
+      throw ArgumentError.value(
+        apiBaseUrl,
+        'apiBaseUrl',
+        'API_BASE_URL must be a configured HTTPS URL. Development may use '
+            'HTTP only for localhost.',
+      );
+    }
+    _instance = AppConfig._(
+      env: env,
+      apiBaseUrl: uri.toString(),
+      enableLogging: env != 'prod',
+    );
   }
 
   /// Resets state between tests. Not for production use.

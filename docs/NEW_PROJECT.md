@@ -1,57 +1,65 @@
-# New Project Checklist
+# New Project Bootstrap
 
-> Phase checklist for standing up a NEW project from this template.
-> For day-to-day work in this repo, see **AGENTS.md** — that is the
-> operating manual. This file is only for project bootstrap.
->
-> Defining WHAT to build happens separately: the intake protocol
-> (`docs/INTAKE.md`) produces `docs/PRODUCT_SPEC.md`. This checklist is
-> the mechanical setup that runs alongside it.
+No generated project starts until the approved product spec exists and release
+readiness is `READY` for the current manifest digest.
 
-## Golden rules
+## Contributor preflight
 
-- **Match ceremony to complexity.** A 5-screen app does NOT need full Clean Architecture. Don't over-engineer.
-- **Never hardcode secrets or environment values.** Use `--dart-define` and `AppConfig`.
-- **Lints and tests must pass before every commit.** `./tool/verify.sh` green.
-- **Do not mix state-management libraries.** This template is Riverpod-only.
+@@@task
+Install FVM, run `fvm install`, and make `fvm flutter doctor -v` clean for the
+required iOS and Android toolchains.
+@@@
 
-## Phase 0 — Environment
+@@@task
+Run `make setup` and `make verify` in the template checkout. This hydrates the
+contributor repository; it does not generate an app.
+@@@
 
-- [ ] Install FVM; the SDK is pinned in `.fvmrc`. Run `fvm install` then `fvm use`.
-- [ ] Run `flutter doctor` and resolve every ✗ (Xcode + CocoaPods, Android SDK, licenses).
-- [ ] Confirm an iOS simulator AND an Android emulator are available.
+## Publishing readiness
 
-## Phase 1 — Identity
+@@@task
+Run `fvm dart run tool/release_readiness.dart init` in an interactive terminal.
+Answer every shared, Apple, Google Play, Firebase, metadata, signing, privacy,
+reviewer, and GitHub question or record an explicit `notApplicable` answer where
+the schema permits it.
+@@@
 
-- [ ] Rename the package: `name:` in `pubspec.yaml`, then global-replace `package:flutter_starter/` imports.
-- [ ] Set reverse-domain bundle/application IDs (template ships `com.example.flutter_starter`):
-      Android: `android/app/build.gradle.kts` (`applicationId`), iOS: Xcode Runner target.
-- [ ] Set real API base URLs per environment in `lib/core/config/app_config.dart`.
-- [ ] Make the first commit before writing feature code.
+@@@task
+Create the initial App Store Connect and Google Play Console app records
+manually. The tool never creates them. Resume the wizard after recording their
+IDs.
+@@@
 
-## Phase 2 — Branding
+@@@task
+Move one-time `.p8`, `.p12`, provisioning, keystore, Firebase, and private
+metadata files to the external `0700` credential directory. Restrict files to
+`0600`; keep passwords in the keychain. `.env.release.local` stores references,
+not values.
+@@@
 
-- [ ] App display name (AndroidManifest / Info.plist).
-- [ ] Launcher icon: configure `flutter_launcher_icons` in pubspec, run it.
-- [ ] Splash screen: configure `flutter_native_splash`, run it.
+@@@task
+Run live validation, inspect the redacted plan, then explicitly confirm GitHub
+environment provisioning. M1 creates and validates `release-internal` and
+`release-production`; M7 may only consume them.
+@@@
 
-## Phase 3 — Quality guardrails (already wired — just activate)
+## Generated project
 
-- [ ] Install pre-commit hooks: `lefthook install`.
-- [ ] Push to GitHub — CI (`.github/workflows/ci.yml`) runs verify + Android build + security scans on every PR.
-- [ ] Set `MIN_COVERAGE` in `tool/verify.sh` to the team's floor (default 70).
+Project bootstrap implementation lands in M5. It will consume `starter.yaml`,
+assert readiness, stage output atomically, apply identity/branding/environment
+configuration, run code generation, verify, and compile both platforms before
+publishing the destination.
 
-## Phase 4 — Ship readiness
+Until M5 is complete, manual renaming or `make feature` does not constitute a
+conformant generated project.
 
-- [ ] `flutter build appbundle --dart-define=ENV=prod` (Android) and
-      `flutter build ipa --dart-define=ENV=prod` (iOS) both succeed.
-- [ ] Signing configured: Android keystore (`key.properties` is gitignored) + iOS certs/provisioning.
-- [ ] CI/CD for store delivery (Codemagic or Fastlane).
-- [ ] Crash reporting wired (Crashlytics/Sentry) — forward from the three
-      handlers in `lib/bootstrap.dart`, nowhere else.
-- [ ] Store assets: privacy policy, screenshots, descriptions.
+## Fixed technical decisions
 
-## Definition of done (every feature)
-
-Run `./tool/verify.sh`. It encodes all of it: codegen fresh, format clean,
-analyze clean, tests green, coverage above the floor.
+- iOS 13.0 or newer.
+- Android API 24 minimum and API 36 target.
+- Riverpod-only feature logic.
+- Custom HTTPS API authoritative.
+- Firebase identity/platform services.
+- Drift local source of truth with durable outbox.
+- 90% global and 95% critical-module coverage.
+- No secrets in source, Dart defines, `AppConfig`, `.env`, logs, or assets.

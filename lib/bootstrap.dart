@@ -12,10 +12,17 @@ import 'package:flutter_starter/core/logging/app_logger.dart';
 /// All entry points go through here so error reporting is wired exactly
 /// once. To add crash reporting (Crashlytics/Sentry), forward errors from
 /// the three handlers below — do not add handlers anywhere else.
-Future<void> bootstrap(Widget Function() builder) async {
-  // Read compile-time env (pass with --dart-define=ENV=dev|staging|prod).
-  const env = String.fromEnvironment('ENV', defaultValue: 'dev');
-  AppConfig.init(env);
+Future<void> bootstrap(
+  Widget Function() builder, {
+  String? environment,
+  String? apiUrl,
+}) async {
+  // Both values are mandatory so release builds cannot fall back to dev.
+  const compiledEnv = String.fromEnvironment('ENV');
+  const compiledApiBaseUrl = String.fromEnvironment('API_BASE_URL');
+  final env = environment ?? compiledEnv;
+  final apiBaseUrl = apiUrl ?? compiledApiBaseUrl;
+  AppConfig.init(env, apiBaseUrl: apiBaseUrl);
 
   final logger = createLogger();
 

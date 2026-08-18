@@ -1,0 +1,43 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan committed secrets
+        uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Scan dependencies for known vulnerabilities
+        uses: google/osv-scanner-action/osv-scanner-action@6e4298ebc4db23e847df9b2e2de2939d6f066c67
+        with:
+          scan-args: |-
+            scan
+            source
+            --lockfile=pubspec.lock
+      - name: Validate policy and forbidden-material manifests
+        run: |
+          jq empty config/security/*.json config/schemas/*.json
+          for path in $(git ls-files); do
+            case "$path" in
+              *.p8|*.p12|*.mobileprovision|*.jks|*.keystore|*service-account*.json|*service_account*.json|*/google-services.json|*/GoogleService-Info.plist|*private-store-metadata*.json)
+                echo "Forbidden tracked credential: $path" >&2
+                exit 1
+                ;;
+            esac
+          done

@@ -3,7 +3,7 @@
 > Directives for any AI coding agent working in this repo.
 > Bootstrapping a NEW project from this template? See `docs/NEW_PROJECT.md`.
 
-## The two gates
+## The three gates
 
 1. **Asked to build an app (or a substantial feature set)?** Do NOT start
    coding. Run the intake protocol in `docs/INTAKE.md` first: ask its
@@ -12,7 +12,11 @@
    protocol defines. If `docs/PRODUCT_SPEC.md` already exists, read it
    before anything else — it is the source of truth. If it exists but the
    request contradicts it, reconcile the spec first.
-2. **A task is done when `./tool/verify.sh` passes.** It runs deps → l10n →
+2. **Generating a new app?** Run the release-readiness wizard before generated-
+   project dependency installation, branding, or features. Generation remains
+   blocked until the current manifest digest reaches `READY`. There is no skip
+   or force path, and initial store records are always human-created.
+3. **A task is done when `./tool/verify.sh` passes.** It runs manifests → deps → l10n →
    codegen → format → analyze → tests → coverage floor. CI runs the exact
    same script (`--ci` mode adds codegen-drift and format-drift failures).
    Never declare a task complete without running it.
@@ -28,13 +32,16 @@ tweak)? Gate 1 doesn't apply — just mirror existing patterns and hit gate 2.
 | Regenerate codegen (freezed/riverpod/json) | `make gen` |
 | Regenerate l10n from ARB files | `make l10n` |
 | Fast tests (no goldens) | `make test` |
-| Regenerate golden screenshots | `make goldens` |
+| Check golden screenshots | `make goldens-check` |
+| Regenerate golden screenshots | `make goldens-update` |
+| Readiness status | `make readiness` |
+| Redacted readiness plan | `make readiness-plan` |
 | **Full verification (definition of done)** | `make verify` or `./tool/verify.sh` |
 | Scaffold a new feature | `make feature NAME=my_feature` |
 | Run the app | `make run` (dev flavor) |
 
-The SDK is pinned in `.fvmrc` and CI reads it from there. Use `fvm flutter`
-if FVM is installed; the Makefile and verify.sh handle this automatically.
+The SDK is pinned in `.fvmrc`; install FVM and run `fvm install`. Commands fail
+if a fallback SDK does not match exactly.
 
 ## Stack (do not substitute)
 
@@ -42,12 +49,18 @@ Riverpod 3 (`@riverpod` codegen only — no `StateNotifier`, no manual
 providers for feature logic) · go_router · dio · freezed 3 + json_serializable ·
 very_good_analysis · mocktail + http_mock_adapter for tests.
 
+This is a personal public Flutter project. Do not introduce Brazil, Apollo, or
+other Amazon-internal build/deployment tooling. Build only with the pinned
+Flutter/Dart SDK, Gradle/Xcode, and GitHub Actions documented here.
+
 ## How to add a feature
 
-1. `make feature NAME=my_feature` — stamps the canonical layout with
-   `TODO(agent)` markers and a passing test skeleton.
-2. Fill in the markers. Mirror the reference feature `lib/features/todos/`
-   for every pattern decision — it is the gold standard for all four layers.
+The current generator is a pre-M5 baseline and is not AC-2 compliant. For
+changes to this template's existing demo only:
+
+1. `make feature NAME=my_feature` stamps the old layout with TODO markers.
+2. Fill in the markers. Mirror `lib/features/todos/` only for layer boundaries,
+   `Result`, Riverpod, and test style. It is not yet the offline/sync reference.
 3. `make gen`, add a route (`RouteNames` + `GoRoute` in
    `lib/core/router/app_router.dart`), add strings to
    `lib/l10n/arb/app_en.arb` + `make l10n`.
@@ -60,16 +73,20 @@ very_good_analysis · mocktail + http_mock_adapter for tests.
   + repository implementations. Application = `@riverpod` controllers.
   Presentation = screens/widgets.
 - **Repositories never throw.** They return `Result<T>` (`lib/core/result/`).
-  Catch with `on Exception`, map via `mapToAppException`. The closed error
+  Catch expected exceptions and map via `mapToAppException`. JSON collection
+  casts can throw `TypeError`; map that explicitly rather than copying a broad
+  `on Exception` pattern blindly. The closed error
   set lives in `lib/core/error/app_exception.dart` — extend it there, don't
   invent ad-hoc exceptions.
 - **Controllers** rethrow failures via `result.valueOrThrow` so Riverpod
   exposes `AsyncError`; screens `switch` on `AsyncValue` and render all
   three states (see `todos_screen.dart`).
 - **User-facing strings** go in `lib/l10n/arb/app_en.arb`, never inline.
+  Exceptions carry stable codes; presentation localizes them.
 - **Navigation** only via `context.goNamed(RouteNames.x)` — no raw paths.
 - **Env values** only via `AppConfig` — never read `String.fromEnvironment`
-  elsewhere, never hardcode URLs or secrets.
+  elsewhere. `ENV` and `API_BASE_URL` are mandatory; there is no dev fallback.
+  Dart defines and `AppConfig` contain nonsecret configuration only.
 - **Errors at the top**: global handlers live in `lib/bootstrap.dart` only.
 
 ## Codegen rules
@@ -93,8 +110,9 @@ very_good_analysis · mocktail + http_mock_adapter for tests.
 
 - Always pump screens with `tester.pumpApp` from `test/helpers/helpers.dart`.
 - Test names: `should <expected behavior> when <condition>`.
-- Golden tests are excluded from default runs and CI (cross-platform
-  rasterization drift). Regenerate intentionally: `make goldens`.
+- Golden tests use a dedicated pinned workflow. Compare with
+  `make goldens-check`; regenerate intentionally with `make goldens-update`.
+- Coverage floors are 90% globally and 95% for auth/config/storage/sync.
 
 ## Known gotchas (learned the hard way — do not rediscover)
 
@@ -111,8 +129,8 @@ very_good_analysis · mocktail + http_mock_adapter for tests.
    (`abstract class Todo with _$Todo`).
 5. **`AppConfig.instance` before `init()` throws StateError.** In tests,
    call `setUpTestConfig()` from `test/helpers/` if config is touched.
-6. **build_runner conflicts**: always use `--delete-conflicting-outputs`
-   (the Makefile does).
+6. **build_runner**: current build_runner removed
+   `--delete-conflicting-outputs`; use `make gen` without legacy flags.
 7. **iOS pod failures**: `cd ios && pod install --repo-update`. Gradle
    heap: bump `org.gradle.jvmargs` in `android/gradle.properties`.
 8. **Hot reload does not apply codegen changes** — rerun `make gen`, then
@@ -120,8 +138,9 @@ very_good_analysis · mocktail + http_mock_adapter for tests.
 
 ## Environments
 
-`--dart-define=ENV=dev|staging|prod`, read once in `bootstrap()` into
-`AppConfig`. Unknown values throw at startup by design. Default is `dev`.
+`ENV=dev|staging|prod` and `API_BASE_URL=<configured URL>` are read once in
+`bootstrap()` into `AppConfig`. Missing, unknown, insecure, or placeholder
+values fail startup. Development HTTP is allowed only for localhost.
 
 ## MCP
 
@@ -130,12 +149,25 @@ analyzer, test runner, and pub. Prefer it over parsing CLI text when your
 runtime supports MCP — see `.mcp.json` at the repo root:
 
 ```bash
-dart mcp-server
+fvm dart mcp-server
 ```
+
+## Agent skills
+
+- Project-local official Dart and Flutter skills live in `.agents/skills/`.
+- `skills-lock.json` records GitHub sources and content hashes.
+- `.skills.json` pins signed Skills Hub installations.
+- `opencode.json` loads project skills and the pinned Adaptive UI skill.
+- Project rules in this file and `docs/PRODUCT_SPEC.md` override generic skill
+  advice when they conflict with the approved stack or architecture.
+- Restore/update with the pinned CLIs documented in `README.md`; review diffs
+  before accepting updates because skills execute with full agent permissions.
 
 ## Scope discipline
 
 - Match existing patterns before inventing new ones. Deviating from a
   pattern in this file requires calling it out and getting approval first.
 - Minimal changes; no drive-by refactors; flag extra work, don't do it.
-- Never commit secrets. `.env*`, keystores, `key.properties` are gitignored.
+- Never commit secrets. `.env*`, private keys, signing assets, service-account
+  JSON, Firebase environment files, and private store metadata are gitignored.
+  `.env.release.local` may contain references only.

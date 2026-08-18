@@ -6,6 +6,9 @@ build/
 .idea/
 .vscode/
 *.iml
+.DS_Store
+.claude/scratch/
+.release-readiness/
 
 # Platform
 ios/Pods/
@@ -17,9 +20,20 @@ ios/Flutter/ephemeral/
 # Secrets — never commit env files or keys
 .env
 .env.*
+!.env.release.local.example
 *.keystore
 *.jks
 key.properties
+AuthKey_*.p8
+*.p12
+*.mobileprovision
+*.pem
+*.key
+**/*service-account*.json
+**/*service_account*.json
+**/private-store-metadata*.json
+android/app/**/google-services.json
+ios/Runner/GoogleService-Info.plist
 
 # Test artifacts
 coverage/

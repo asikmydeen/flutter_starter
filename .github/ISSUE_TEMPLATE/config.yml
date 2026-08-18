@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 💬 Questions & discussions
-    url: https://github.com/your-org/flutter_starter/discussions
+  - name: Questions and discussions
+    url: https://github.com/asikmydeen/flutter_starter/discussions
     about: Ask questions and discuss ideas here instead of opening an issue.
+  - name: Private security report
+    url: https://github.com/asikmydeen/flutter_starter/security/advisories/new
+    about: Report vulnerabilities privately. Do not open a public issue.

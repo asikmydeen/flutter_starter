@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "allowed": [
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "MIT"
+  ],
+  "denied": [
+    "AGPL-3.0-only",
+    "AGPL-3.0-or-later"
+  ],
+  "unknownPolicy": "deny",
+  "waiverFile": "config/security/dependency-waivers.json"
+}

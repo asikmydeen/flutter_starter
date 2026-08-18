@@ -4,6 +4,12 @@
 > truth for the build. If code and spec disagree, STOP and reconcile.
 > Copy this file to `docs/PRODUCT_SPEC.md` and delete the placeholders.
 
+- **Status**: DRAFT / APPROVED
+- **Approval date**: <required>
+- **Current milestone**: M0
+- **Readiness stage**: DRAFT
+- **Readiness evidence**: `config/release_readiness.json`
+
 ## Purpose
 
 <One sentence. Who it's for and what it does.>
@@ -14,9 +20,21 @@
 
 ## Core flows (priority order)
 
-| # | Flow | Feature folder | Status |
-|---|------|----------------|--------|
-| 1 | <flow> | `features/<name>` | not started |
+| # | Flow | Feature folder | Foundations | Status |
+|---|---|---|---|---|
+| 1 | <flow> | `features/<name>` | <core/tool/platform dependencies> | not started |
+
+## First demo (walking skeleton)
+
+<Exact iOS/Android path, auth method, API operation, persisted offline action,
+restart/reconnect behavior, diagnostic event, and approval evidence.>
+
+## Publishing readiness
+
+- Initial App Store Connect and Google Play Console records: human-created.
+- `release-internal` and `release-production`: provisioned and validated by M1.
+- Secret values: external files/keychain/protected environments only.
+- Current readiness digest and blocked reason: <required>.
 
 ## Out of scope (v1)
 
@@ -24,8 +42,9 @@
 
 ## Backend & data
 
-- **API**: <base URLs per env, docs link — or "local-only" / BaaS choice>
-- **Auth**: <method, token type, refresh flow — or "none">
+- **API**: independent dev/staging/prod URLs and OpenAPI path; custom API is authoritative.
+- **Auth**: Firebase methods, ID-token refresh, erase lifecycle, roles/claims.
+- **Offline**: Drift local source, outbox, idempotency, versions, tombstones, conflicts.
 - **Entities** (sample payloads or field lists):
 
 ```json
@@ -43,18 +62,35 @@
 
 ## Platform
 
-- Targets: <iOS/Android, min versions> · Tablet: <y/n> · Offline: <mode>
+- Targets: iOS 13+ and Android API 24+ / target 36. Tablet and landscape included.
 - Push: <y/n> · Deep links: <y/n>
 
 ## Non-functional
 
-- Languages: <list> · Analytics/crash: <choice> · Store release in v1: <y/n>
+- Languages: <list>; Firebase analytics/crash/performance with consent.
+- Coverage: 90% global, 95% auth/config/storage/sync.
+- Accessibility: WCAG 2.2 AA, 200% text, semantics, contrast, focus.
+- Performance budgets: <reference devices and thresholds>.
 
 ## Milestones
 
-| # | Milestone | Contains | Verified (verify.sh) | Demoed |
-|---|-----------|----------|----------------------|--------|
-| 0 | Walking skeleton | nav shell, theme, flow #1 | ☐ | ☐ |
+| ID | Milestone | Status | Evidence |
+|---|---|---|---|
+| M0 | Contracts and baseline | not started | <link/report> |
+| M1 | Publishing readiness | not started | <link/report> |
+| M2 | Walking skeleton | not started | <link/report> |
+| M3 | Production/offline foundations | not started | <link/report> |
+| M4 | Reference slice completion | not started | <link/report> |
+| M5 | Generators | not started | <link/report> |
+| M6 | Quality and release gates | not started | <link/report> |
+| M7 | Release automation | not started | <link/report> |
+| M8 | Qualification | not started | <link/report> |
+
+## Acceptance criteria
+
+| ID | Criterion | Evidence | Status |
+|---|---|---|---|
+| AC-1 | <measurable result> | <test/report> | not started |
 
 ## Assumptions log
 

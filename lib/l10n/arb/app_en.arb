@@ -16,9 +16,41 @@
   "@openTodosButton": {
     "description": "Home screen button that navigates to the todos reference feature"
   },
+  "openDiagnosticsButton": "Open diagnostics",
+  "@openDiagnosticsButton": {
+    "description": "Home screen button that opens diagnostics"
+  },
+  "openPrivacyButton": "Open privacy settings",
+  "@openPrivacyButton": {
+    "description": "Home screen button that opens privacy settings"
+  },
+  "diagnosticsTitle": "Diagnostics",
+  "@diagnosticsTitle": {"description": "Diagnostics screen title"},
+  "environmentLabel": "Environment",
+  "@environmentLabel": {"description": "Current environment label"},
+  "apiHostLabel": "API host",
+  "@apiHostLabel": {"description": "Configured API host label"},
+  "privacyTitle": "Privacy",
+  "@privacyTitle": {"description": "Privacy screen title"},
+  "analyticsConsentTitle": "Share usage analytics",
+  "@analyticsConsentTitle": {"description": "Analytics consent control title"},
+  "analyticsConsentDescription": "Help improve the app with consent-controlled, non-sensitive usage data.",
+  "@analyticsConsentDescription": {"description": "Analytics consent explanation"},
+  "deleteLocalDataTitle": "Delete local data",
+  "@deleteLocalDataTitle": {"description": "Local data deletion option title"},
+  "deleteLocalDataDescription": "Signing out or deleting the account removes account-scoped local data.",
+  "@deleteLocalDataDescription": {"description": "Local data deletion behavior"},
   "counterTitle": "Counter",
   "@counterTitle": {
     "description": "App bar title of the counter screen"
+  },
+  "incrementCounter": "Increment counter",
+  "@incrementCounter": {
+    "description": "Accessible label for the increment counter action"
+  },
+  "decrementCounter": "Decrement counter",
+  "@decrementCounter": {
+    "description": "Accessible label for the decrement counter action"
   },
   "todosTitle": "Todos",
   "@todosTitle": {
@@ -27,6 +59,43 @@
   "retryButton": "Retry",
   "@retryButton": {
     "description": "Button shown under an error message to retry the failed operation"
+  },
+  "networkError": "Could not reach the server. Check your connection.",
+  "@networkError": {
+    "description": "Error shown when a network request cannot reach the server"
+  },
+  "apiError": "The server returned an error ({statusCode}).",
+  "@apiError": {
+    "description": "Error shown when the server returns a failed status",
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "parsingError": "Received an unexpected response format.",
+  "@parsingError": {
+    "description": "Error shown when server data cannot be parsed"
+  },
+  "configurationError": "The app is not configured for this environment.",
+  "@configurationError": {
+    "description": "Error shown when required environment configuration is invalid"
+  },
+  "authenticationError": "Your session has expired. Sign in again.",
+  "@authenticationError": {
+    "description": "Error shown when authentication is required or expired"
+  },
+  "storageError": "The app could not save data on this device.",
+  "@storageError": {
+    "description": "Error shown when local persistence fails"
+  },
+  "conflictError": "This item changed elsewhere. Review both versions.",
+  "@conflictError": {
+    "description": "Error shown when local and remote edits conflict"
+  },
+  "unknownError": "Something went wrong. Please try again.",
+  "@unknownError": {
+    "description": "Fallback error for an unexpected failure"
   },
   "routeNotFound": "Route not found: {uri}",
   "@routeNotFound": {

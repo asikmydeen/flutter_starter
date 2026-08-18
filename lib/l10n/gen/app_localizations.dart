@@ -118,11 +118,83 @@ abstract class AppLocalizations {
   /// **'Open todos demo (reference feature)'**
   String get openTodosButton;
 
+  /// Home screen button that opens diagnostics
+  ///
+  /// In en, this message translates to:
+  /// **'Open diagnostics'**
+  String get openDiagnosticsButton;
+
+  /// Home screen button that opens privacy settings
+  ///
+  /// In en, this message translates to:
+  /// **'Open privacy settings'**
+  String get openPrivacyButton;
+
+  /// Diagnostics screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
+  String get diagnosticsTitle;
+
+  /// Current environment label
+  ///
+  /// In en, this message translates to:
+  /// **'Environment'**
+  String get environmentLabel;
+
+  /// Configured API host label
+  ///
+  /// In en, this message translates to:
+  /// **'API host'**
+  String get apiHostLabel;
+
+  /// Privacy screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacyTitle;
+
+  /// Analytics consent control title
+  ///
+  /// In en, this message translates to:
+  /// **'Share usage analytics'**
+  String get analyticsConsentTitle;
+
+  /// Analytics consent explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Help improve the app with consent-controlled, non-sensitive usage data.'**
+  String get analyticsConsentDescription;
+
+  /// Local data deletion option title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete local data'**
+  String get deleteLocalDataTitle;
+
+  /// Local data deletion behavior
+  ///
+  /// In en, this message translates to:
+  /// **'Signing out or deleting the account removes account-scoped local data.'**
+  String get deleteLocalDataDescription;
+
   /// App bar title of the counter screen
   ///
   /// In en, this message translates to:
   /// **'Counter'**
   String get counterTitle;
+
+  /// Accessible label for the increment counter action
+  ///
+  /// In en, this message translates to:
+  /// **'Increment counter'**
+  String get incrementCounter;
+
+  /// Accessible label for the decrement counter action
+  ///
+  /// In en, this message translates to:
+  /// **'Decrement counter'**
+  String get decrementCounter;
 
   /// App bar title of the todos screen
   ///
@@ -135,6 +207,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get retryButton;
+
+  /// Error shown when a network request cannot reach the server
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach the server. Check your connection.'**
+  String get networkError;
+
+  /// Error shown when the server returns a failed status
+  ///
+  /// In en, this message translates to:
+  /// **'The server returned an error ({statusCode}).'**
+  String apiError(int statusCode);
+
+  /// Error shown when server data cannot be parsed
+  ///
+  /// In en, this message translates to:
+  /// **'Received an unexpected response format.'**
+  String get parsingError;
+
+  /// Error shown when required environment configuration is invalid
+  ///
+  /// In en, this message translates to:
+  /// **'The app is not configured for this environment.'**
+  String get configurationError;
+
+  /// Error shown when authentication is required or expired
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Sign in again.'**
+  String get authenticationError;
+
+  /// Error shown when local persistence fails
+  ///
+  /// In en, this message translates to:
+  /// **'The app could not save data on this device.'**
+  String get storageError;
+
+  /// Error shown when local and remote edits conflict
+  ///
+  /// In en, this message translates to:
+  /// **'This item changed elsewhere. Review both versions.'**
+  String get conflictError;
+
+  /// Fallback error for an unexpected failure
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get unknownError;
 
   /// Error page message for unknown routes
   ///

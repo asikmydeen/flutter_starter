@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flutterstarter.dev/schemas/store-metadata.schema.json",
+  "title": "Public store metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "identity", "releasePolicy", "localizations", "privacy", "apple", "googlePlay", "assetsManifest", "privateMetadataRef"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "status": {"enum": ["DRAFT", "APPROVED"]},
+    "identity": {"type": "object"},
+    "releasePolicy": {"type": "object"},
+    "localizations": {"type": "object"},
+    "privacy": {"type": "object"},
+    "apple": {"type": "object"},
+    "googlePlay": {"type": "object"},
+    "assetsManifest": {"type": "string"},
+    "privateMetadataRef": {"type": "string", "pattern": "^(|file://)"}
+  }
+}

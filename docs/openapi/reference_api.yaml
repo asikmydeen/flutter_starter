@@ -1,0 +1,128 @@
+openapi: 3.1.0
+info:
+  title: Flutter Starter Reference API
+  version: 1.0.0
+servers:
+  - url: https://api.example.invalid
+    description: Replace during readiness; invalid domains cannot reach READY.
+security:
+  - firebaseBearer: []
+paths:
+  /v1/todos:
+    get:
+      operationId: listTodos
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Todo page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoPage'
+  /v1/todos/changes:
+    get:
+      operationId: listTodoChanges
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Changed Todos and tombstones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoPage'
+  /v1/todos/{todoId}/mutations:
+    post:
+      operationId: mutateTodo
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: todoId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoMutation'
+      responses:
+        '200':
+          description: Authoritative result, including duplicate idempotent delivery
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Todo'
+        '409':
+          description: Version conflict with current remote value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conflict'
+components:
+  securitySchemes:
+    firebaseBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Firebase-ID-Token
+  parameters:
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Todo:
+      type: object
+      additionalProperties: false
+      required: [id, title, completed, version, createdAt, updatedAt]
+      properties:
+        id: {type: string}
+        title: {type: string, minLength: 1}
+        completed: {type: boolean}
+        version: {type: integer, minimum: 0}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        deletedAt: {type: [string, 'null'], format: date-time}
+    TodoPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/Todo'}
+        nextCursor: {type: [string, 'null']}
+    TodoMutation:
+      type: object
+      additionalProperties: false
+      required: [idempotencyKey, baseVersion, operation]
+      properties:
+        idempotencyKey: {type: string, format: uuid}
+        baseVersion: {type: integer, minimum: 0}
+        operation: {enum: [create, update, delete]}
+        todo:
+          type: object
+          additionalProperties: false
+          properties:
+            title: {type: string}
+            completed: {type: boolean}
+    Conflict:
+      type: object
+      additionalProperties: false
+      required: [code, remote]
+      properties:
+        code: {const: version_conflict}
+        remote: {$ref: '#/components/schemas/Todo'}

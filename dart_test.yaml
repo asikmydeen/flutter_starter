@@ -3,3 +3,10 @@
 # Run them explicitly: flutter test --tags golden
 tags:
   golden:
+  contract:
+  a11y:
+  responsive:
+  security:
+  release:
+  integration:
+  slow:

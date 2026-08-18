@@ -1,89 +1,63 @@
 # Contributing
 
-Thanks for contributing! This guide keeps the codebase consistent and easy to work in.
-
-## Prerequisites
-
-- **FVM** with the pinned SDK (`fvm use stable` — see `.fvmrc`)
-- `flutter doctor` clean (Xcode + CocoaPods, Android SDK, licenses)
-- An iOS simulator and an Android emulator available
-
-## Getting started
+## Setup
 
 ```bash
-fvm flutter pub get
-dart run build_runner build --delete-conflicting-outputs   # codegen
-fvm flutter run --dart-define=ENV=dev
-
+brew install fvm
+fvm install
+make setup
+make verify
 ```
 
-## Branching & commits
+Use the exact Flutter version from `.fvmrc`; do not switch to `stable`.
 
-- Branch from `main`: `feat/<short-name>`, `fix/<short-name>`, `chore/<short-name>`.
-- Use [Conventional Commits](https://www.conventionalcommits.org/):- `feat: add auth login screen`
-- `fix: prevent counter from going negative`
-- `chore: bump go_router to 14.2`
-- `test: cover counter controller edge cases`
-- `docs: update README quick start`
-- Keep commits focused and atomic. Rebase before opening a PR.
+## Scope and architecture
 
-## Project structure
+- Map changes to an approved `docs/PRODUCT_SPEC.md` milestone and acceptance ID.
+- Preserve M0-M8 dependencies; do not implement later milestones around a
+  failing earlier gate.
+- Use `features/<name>/{domain,data,application,presentation}`.
+- Keep domain framework-free and JSON in data DTOs.
+- Use generated Riverpod providers, go_router named routes, the shared Dio
+  client, Freezed, and json_serializable.
+- Repositories return `Result<T>`; presentation localizes typed failures.
+- The custom API is authoritative, Firebase provides platform services, and
+  Drift owns local domain state.
 
-Follow **feature-first + layered**. One folder per feature under `lib/features/`:
+The current Todos feature is a layering/test-pattern reference only. It is not
+yet the offline/auth/sync reference promised by M2-M4.
 
-```
-lib/features/<feature>/
-├── data/          # repositories, data sources, DTOs
-├── domain/        # entities, use-cases, repo interfaces
-├── application/   # controllers / state (Riverpod)
-└── presentation/  # screens + widgets
+## Secrets and configuration
 
-```
+Nonsecret environment values flow through `starter.yaml` and `AppConfig`.
+Credential values never use Dart defines or `.env`. Use external permission-
+restricted files, keychain references, and protected GitHub environment secrets.
 
-Cross-cutting concerns live in `lib/core/` (config, theme, router, network).
+Do not paste credentials, PII, private reviewer contacts, or raw provider errors
+into issues or reviews.
 
-## Coding standards
+## Generated artifacts
 
-- **State:** Riverpod. Do not introduce a second state-management library.
-- **Navigation:** go_router only.
-- **Models:** `freezed` + `json_serializable` — never hand-write `copyWith`/`fromJson`.
-- **Networking:** the shared `dio` client provider in `core/network/`.
-- **No hardcoded secrets or env values.** Route everything through `AppConfig` + `--dart-define`.
-- After editing annotated files, regenerate: `dart run build_runner build --delete-conflicting-outputs`.
+Run code generation after annotation or ARB changes. Commit `*.g.dart`,
+`*.freezed.dart`, generated localization files, and `pubspec.lock` with their
+sources.
 
-## Before you push
+## Tests
+
+- Unit tests for domain, repositories, controllers, and tooling.
+- Widget tests through the production theme/router/localization shell.
+- Contract tests for API, storage, sync, and readiness boundaries.
+- Integration tests for the walking skeleton.
+- Accessibility/responsive/golden evidence for UI changes.
+
+Do not delete assertions to make a build pass. The final gate is always:
 
 ```bash
-dart format .
-fvm flutter analyze     # must be clean
-fvm flutter test        # must be green
-
+./tool/verify.sh
 ```
 
-CI runs the same checks on every PR (`.github/workflows/ci.yml`). PRs that fail `analyze`, `format`, or `test` will not be merged.
+## Reviews
 
-## Testing
-
-Follow the testing pyramid:
-
-1. **Unit** — business logic (controllers, use-cases, repositories).
-2. **Widget** — UI behavior for screens/widgets.
-3. **Integration** — critical end-to-end flows (`patrol` for native interactions).
-
-New logic must ship with tests. Bug fixes should include a regression test.
-
-## Definition of done
-
-1. Code compiles; `flutter analyze` is clean.
-2. Codegen artifacts regenerated (and gitignored consistently).
-3. Unit + widget tests cover new logic and pass.
-4. No hardcoded secrets; env values via `AppConfig`.
-5. Feature follows the `data / domain / application / presentation` layout.
-6. PR description filled out (see the pull request template).
-
-## Opening a pull request
-
-- Fill out the PR template completely.
-- Link the related issue.
-- Keep PRs small and reviewable. Split large work into stacked PRs when possible.
-
+Keep commits focused and use Conventional Commits. Complete the pull request
+template with milestone/AC mapping, verification evidence, security/privacy
+impact, generated artifacts, and any dedicated test results.
