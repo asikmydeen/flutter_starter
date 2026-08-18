@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/dart_executable.dart';
+
 void main() {
   final script = File('tool/new_feature.dart').absolute.path;
 
@@ -132,8 +134,8 @@ Future<ProcessResult> _runGenerator(
   String name,
 ) {
   return Process.run(
-    'fvm',
-    ['dart', 'run', script, name],
+    resolveTestDartExecutable(),
+    [script, name],
     environment: {
       ...Platform.environment,
       'FEATURE_GENERATOR_ROOT': root.path,
