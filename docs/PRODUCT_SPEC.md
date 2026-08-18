@@ -365,8 +365,8 @@ keep them testable and replaceable, but they are not optional starter packs.
 | M4 | Reference slice completion | Complete offline Todos, roles, deep links, push, privacy, diagnostics | in progress - roles/privacy/diagnostics/push seams verified |
 | M5 | Generators | Readiness assertion, project bootstrap, doctor, atomic feature scaffolder | in progress - atomic files/routes/l10n/tests verified |
 | M6 | Quality and release gates | Coverage, accessibility, security, licenses, performance, integration, release policy | in progress - coverage/a11y/responsive/security gates verified |
-| M7 | Release automation | Consume M1 environments; signed builds, symbols, internal distribution, provenance, rollback | in progress - protected internal workflow added, execution pending |
-| M8 | Qualification | Three clean readiness/bootstrap trials and 20-run scaffold p95 benchmark | in progress - p95 engine/workflow added, execution pending |
+| M7 | Release automation | Consume M1 environments; signed builds, symbols, internal distribution, provenance, rollback | in progress - [Android/iOS release compilation verified](https://github.com/asikmydeen/flutter_starter/actions/runs/32101885889); signed distribution blocked on M1 |
+| M8 | Qualification | Three clean readiness/bootstrap trials and 20-run scaffold p95 benchmark | in progress - [20-run scaffold p95 verified at 840 ms](https://github.com/asikmydeen/flutter_starter/actions/runs/32101885122); three readiness-to-release trials blocked on M1 |
 
 Each milestone is implemented and verified separately. Later milestones do not
 start until their dependency contracts and tests pass.
