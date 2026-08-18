@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../tool/src/benchmark.dart';
+import '../helpers/dart_executable.dart';
 
 void main() {
   test('should calculate nearest-rank p95 deterministically', () {
@@ -108,9 +109,7 @@ final routes = <GoRoute>[
         command: [
           'env',
           'FEATURE_GENERATOR_ROOT=${root.path}',
-          'fvm',
-          'dart',
-          'run',
+          resolveTestDartExecutable(),
           script,
           'benchmark_{run}',
         ],
