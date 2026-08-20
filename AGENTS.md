@@ -171,3 +171,6 @@ fvm dart mcp-server
 - Never commit secrets. `.env*`, private keys, signing assets, service-account
   JSON, Firebase environment files, and private store metadata are gitignored.
   `.env.release.local` may contain references only.
+
+## Publishing
+New apps NEVER generate new signing keys or service accounts. Read `docs/publishing/MASTER-CREDENTIALS.md` — one master Play SA + one shared upload keystore (vault `/mnt/asik_home_8/secrets/master/`), ASC key per Apple account. Per-app only: google-services.json + IDs.
