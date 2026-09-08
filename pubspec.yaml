@@ -10,7 +10,7 @@ environment:
 # Dependencies are sorted alphabetically (enforced by lint).
 dependencies:
   connectivity_plus: ^7.3.1
-  dio: ^5.11.0
+  dio: ^5.11.1
   drift: 2.34.3
   drift_flutter: ^0.3.1
   flutter:
